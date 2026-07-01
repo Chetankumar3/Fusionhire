@@ -5,7 +5,7 @@ __pycache__/
 venv/
 
 # Node
-parsers/resume_parser/node_modules/
+node_modules/
 
 # Pipeline intermediate state (regenerated every run)
 shared_memory/db/
