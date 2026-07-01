@@ -1,0 +1,37 @@
+{
+  "source": "csv_3",
+  "method": "normalization",
+  "procured_at": "2026-06-30T19:28:49Z",
+  "total_source_points": 1,
+  "full_name": "Bob Smith",
+  "emails": [
+    "bob.smith@outlook.com"
+  ],
+  "phones": [
+    "+919876543210"
+  ],
+  "location": {
+    "city": null,
+    "region": null,
+    "country": null
+  },
+  "links": {
+    "linkedin": null,
+    "github": null,
+    "portfolio": null,
+    "other": []
+  },
+  "headline": null,
+  "years_experience": null,
+  "skills": [],
+  "experience": [
+    {
+      "company": "Microsoft",
+      "title": "Senior Backend Engineer",
+      "start": null,
+      "end": null,
+      "summary": null
+    }
+  ],
+  "education": []
+}

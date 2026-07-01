@@ -1,0 +1,236 @@
+{
+  "source": "resume_v20 Resume Chetankumar S Majjagi.pdf",
+  "method": "openresume+normalization",
+  "procured_at": "2026-06-16T14:04:03Z",
+  "total_source_points": 1,
+  "full_name": "Chetankumar S Majjagi",
+  "emails": [
+    "chetanmajjagi3@gmail.com"
+  ],
+  "phones": [
+    "+919148808717"
+  ],
+  "location": {
+    "city": "Naya Raipur",
+    "region": null,
+    "country": "IN"
+  },
+  "links": {
+    "linkedin": "https://www.linkedin.com/in/chetankumarSM/",
+    "github": "https://github.com/Chetankumar3",
+    "portfolio": "http://16.112.64.12:8000/",
+    "other": [
+      "https://codeforces.com/profile/Chetan_21",
+      "https://www.codechef.com/users/not_chetan_21",
+      "https://leetcode.com/u/NotChetan_21/",
+      "https://github.com/Chetankumar3/Tradeforces",
+      "http://16.112.64.12.nip.io/chatapp/login/credentials",
+      "https://github.com/Chetankumar3/ChatApp",
+      "villagerelocation-kkot.onrender.com/login.pdf#[0,{\"name\":\"Fit\"}]",
+      "https://github.com/shreyomer10/villageRelocation"
+    ]
+  },
+  "headline": "Backend Developer diving deep into the oceans of distributed architectures and high-level system design.",
+  "years_experience": null,
+  "skills": [
+    {
+      "name": "C/C++",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Python",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "JavaScript",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "SQL",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Go",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "React",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Tailwind CSS",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "FastAPI",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "PostgreSQL",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "MongoDB",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Redis",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "WebSockets",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "AWS",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "GCP",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Nginx",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "k6",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Git",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "CI/CD Pipeline",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Supabase",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Pgbouncer",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Docker Swarm",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Terraform",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Data Structures",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Algorithms",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "CS Fundamentals",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Concurrency",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "Multi-threading",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    },
+    {
+      "name": "System Design",
+      "sources": [
+        "resume_v20 Resume Chetankumar S Majjagi.pdf"
+      ]
+    }
+  ],
+  "experience": [
+    {
+      "company": null,
+      "title": "Tradeforces: Distributed HFT Benchmarking System",
+      "start": "2026-05",
+      "end": "2026-06",
+      "summary": "Engineered an 8-microservice evaluation platform, utilizing Kata Containers and AWS Firecracker to provision hardware-isolated microVMs in 200–300ms with strict CPU pinning. Automated runtime image compilation via Google Cloud Build and dynamic K3s pod generation, enforcing strict pod affinity to perfectly co-locate evaluation workloads. Developed a microsecond-precision Go Telemetry Gateway (7-goroutine pipeline) to dispatch raw FIX protocol orders over TCP. Used complex state-mapping data structures to track single-trade lifecycles and calculate execution latency. Architected a high-throughput event pipeline leveraging Redpanda for strict order serialization and GCP Pub/Sub for decentralized worker queues and dynamic backpressure management. Tech Stack: Go, FastAPI, React, GCS, Cloud Build, Redpanda, Pub/Sub, Postgres, Kubernetes (K3s), Docker, Terraform."
+    },
+    {
+      "company": null,
+      "title": "Ping: Distributed Real-Time Messaging System",
+      "start": "2026-04",
+      "end": null,
+      "summary": "Engineered Ping, a real-time messaging system, by evolving a monolithic design into a scalable microservices architecture that decouples the main API from the connection manager. Developed a co-locating FastAPI and gRPC servers in a single Python application to share memory for Websocket objects. Architected a Distributed system, enabling horizontal scaling with a Dynamic Nginx Load Balancer for the gateway and Redis for the replica mapping and finding active replicas. In a high-concurrency k6 Load test with backend deployed as a multi-replica in a multi-instance setup, the system handled 8000 concurrent virtual users and P95 latency of 198ms on 6000 vus on a 5-core infra with Redis and Postgres GCP services. Tech Stack: Python, FastAPI, gRPC, Redis, ws, Postgres, k6, AWS, GCP, Nginx, CI/CD, PgBouncer, Docker Swarm, Terraform."
+    },
+    {
+      "company": null,
+      "title": "AI-Powered Relocation Survey Management System",
+      "start": "2026-01",
+      "end": "2026-05",
+      "summary": "Digitalized the village relocation workflow, with the CV stage detection and a 4-step verification pipeline for transparency. Built an AI chatbot for real-time dynamic data analysis and visualization by plain-English queries, where the LLM generates pseudo-queries routed through a validator layer to enforce role-based authorization and enhanced security. Tech Stack: React, Flutter, Python, Flask, MongoDB, OpenCV, AI/LLM Integration."
+    }
+  ],
+  "education": [
+    {
+      "institution": "International Institute of Information Technology",
+      "degree": "Bachelor of Technology",
+      "field": "Computer Science Engineering",
+      "end_year": 2027
+    }
+  ]
+}

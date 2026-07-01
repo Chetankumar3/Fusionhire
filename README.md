@@ -1,240 +1,60 @@
-# FusionHire — Multi-Source Candidate Data Transformer
+# Fusionhire
 
-Ingests candidate profiles from multiple structured and unstructured sources,
-normalizes them, merges duplicates across sources into **one canonical profile
-per candidate**, records provenance + confidence, and projects the result into a
-configurable output schema validated with Pydantic.
+**Resources**
+- Architecture Diagram: [https://excalidraw.com/#json=PFlt79TtX9c9d3q-y9t82,CN9ed7eRT1S74Y3ZCVqX2A]
+- Demo Video: [Insert Demo Video URL Here]
 
-Sources implemented (one from each required group):
-- **Structured** — Recruiter **CSV** export (`name, email, phone, current_company, title`).
-- **Unstructured** — **Resume PDF**, parsed positionally with pdf.js (the engine
-  OpenResume is built on).
-
----
-
-## Pipeline at a glance
-
-```
-data_sources/                     parsers/                       shared_memory/
-  csvs/*.csv      ──▶ csv_parser ─┐                                parsed_jsons/*.json
-  resumes/*.pdf   ──▶ resume_parser (Part A: Node/pdf.js          (one normalized
-                       ─▶ raw_json ─▶ Part B: Python) ────────────▶ record per source)
-                                                                         │
-                                                                         ▼
-                                          merge_engine ──▶ Mongita (active_profiles)
-                                          match by email|phone, merge, confidence
-                                                                         │
-                                                                         ▼
-                                          projector ──▶ config-driven, validated JSON
-```
-
-Stages: **parse → normalize → merge → confidence → project → validate.**
+## Table of Contents
+1. [Overview](#1-overview)
+2. [How to Run](#2-how-to-run)
+3. [Architecture](#3-architecture)
+4. [Architectural Decisions](#4-architectural-decisions)
+5. [Edge Cases Handled (and Descoped)](#5-edge-cases-handled-and-descoped)
+6. [Noteworthy Technical Points](#6-noteworthy-technical-points)
 
 ---
 
-## Setup
+## 1. Overview
 
-```bash
-# Python deps
-pip install -r requirements.txt
+Fusionhire is a Multi-Source Candidate Data Transformer. It ingests candidate information from disparate structured (CSV) and unstructured (Resume PDF) sources, normalizes the data, resolves conflicts, and merges them into a single, canonical, schema-valid JSON profile.
 
-# (Optional) Resume Part A regeneration — Node deps
-cd parsers/resume_parser && npm install && cd ../..
-```
+## 2. How to Run
 
-- Python 3.10+ (developed on 3.12). Node 18+ only needed to *re-generate* the
-  resume intermediate JSON; the committed `parsers/resume_parser/raw_json/` lets
-  the pipeline run resume data **without Node**.
-- No database to install — **Mongita** is a file-based embedded Mongo, stored in
-  `shared_memory/db/`.
+The pipeline is designed to be completely frictionless with zero external database dependencies.
 
----
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Execute the pipeline:
+   ```bash
+   python .\backend\run_pipeline.py
+   ```
 
-## Run
+## 3. Architecture
 
-**Whole pipeline (idempotent — cleans intermediates, then parse → merge → project):**
+*(See Excalidraw link in Resources for the bird's-eye diagram)*
 
-```bash
-python run_pipeline.py
-```
+**Sources** → **Independent Extractors** → **Standardized JSON** → **In-Memory Mongita DB** → **Merge Engine** → **Projector (Configurable Output)** → **Final JSON**
 
-Writes the produced output to:
-- `shared_memory/output_default.json` — full canonical schema.
-- `shared_memory/output_custom.json` — the custom "contact card" config.
+## 4. Architectural Decisions
 
-Useful flags:
-```bash
-python run_pipeline.py --no-node        # reuse committed raw_json/ (skip Part A)
-python run_pipeline.py --skip-resume    # CSV source only (graceful-degradation demo)
-python run_pipeline.py --config projector/configs/custom_contact_card.json   # also print this config
-```
+- **Batch Scripts over Always-On Servers:** A single command (`run_pipeline.py`) processes the entire batch, using a document store for persistence and eliminating unnecessary server overhead.
+- **Decoupled Layer Architecture:** Ingestion is decoupled from transformation, so new sources only need their own lightweight converter to standardized JSON — the core engine stays unchanged.
+- **Database as a File (Mongita):** Match-key grouping requires querying arrays (e.g., email/phone lists). Mongita provides MongoDB-style query power in a zero-dependency, embedded form, and cleanly decouples the `merge_engine` from the `projector`. For production, swap in a real MongoDB instance via environment variables.
 
-**Projector standalone** (point it at the merged DB + a config):
+## 5. Edge Cases Handled (and Descoped)
 
-```bash
-python -m projector.projector --config projector/configs/default.json
-python -m projector.projector --config projector/configs/custom_contact_card.json --output card.json
-python -m projector.projector --config <cfg> --candidate-id <id>
-```
+- **Email Uniqueness:** Emails are assumed to come from non-recycling providers and are treated as high-confidence primary match keys.
+- **Phone Number Recycling:** Acknowledged as a risk, but recency/timestamp checks are descoped due to time constraints.
+- **Ambiguous Date Formats:** Resolved deterministically —
+  - `XX-XX-XXXX` → `DD-MM-YYYY`
+  - `XXXX-XX-XX` → `YYYY-MM-DD` (ISO 8601)
+  - `XX-XXXX-XX` → `DD-YYYY-MM`
 
-**Run components individually:**
-```bash
-python parsers/csv_parser/csv_parser.py
-cd parsers/resume_parser && npm run parse && cd ../..   # Part A
-python parsers/resume_parser/part_b.py                  # Part B
-python merge_engine/merge.py
-```
+## 6. Noteworthy Technical Points
 
-**Tests:**
-```bash
-python -m pytest tests/ -q          # 34 tests: normalizers, skills, merge, projector, e2e gold profile
-```
-
----
-
-## The canonical schema
-
-```jsonc
-{
-  "candidate_id": "…",                 // Mongita _id
-  "full_name": "…",
-  "emails": ["…"], "phones": ["…"],    // E.164 phones
-  "location": { "city", "region", "country" },   // country = ISO-3166 alpha-2
-  "links": { "linkedin", "github", "portfolio", "other": ["…"] },
-  "headline": "…",
-  "years_experience": 0,
-  "skills": [ { "name", "confidence", "sources": ["…"] } ],   // canonical names
-  "experience": [ { "company", "title", "start", "end", "summary" } ],  // YYYY-MM
-  "education": [ { "institution", "degree", "field", "end_year" } ],
-  "provenance": [ { "field", "value", "source", "method" } ],
-  "overall_confidence": 0.0,
-  "total_source_points": 1
-}
-```
-
-### Normalized formats
-- **Phones** → E.164 (`phonenumbers`). Valid *or* possible numbers are kept
-  (so well-formed international/reserved ranges survive); unparseable → dropped.
-- **Country** → ISO-3166 alpha-2 (`pycountry`); unresolvable → `null`.
-- **Dates** → `YYYY-MM`. Ambiguity rules: `DD-MM-YYYY`, `YYYY-MM-DD`,
-  `DD-YYYY-MM`; 2-part numeric detects the 4-digit year; month names in either
-  order; `present/current/ongoing` → `null` (ongoing); anything unparseable →
-  `null` (never guessed). Both `-` and `/` delimiters.
-- **Skills** → canonical names via a file-based taxonomy (see below).
-
----
-
-## Merge policy (`merge_engine/`)
-
-For each parsed record, query `active_profiles` for any doc whose **emails OR
-phones intersect** the incoming record; archive + absorb the matches; insert one
-merged doc. Rules:
-
-| Field | Rule |
-|---|---|
-| `full_name`, `headline`, `links.{linkedin,github,portfolio}` | winner = most recent `procured_at`, then longer string, then alpha-first |
-| `location` | whole object from latest `procured_at`; tie → most non-null fields |
-| `emails`, `phones`, `links.other` | union (no exact dupes) |
-| `years_experience` | max non-null |
-| `skills` | union by canonical name; `confidence = len(sources)/total_source_points` |
-| `experience` | dedupe `(company,title)`; earliest start; `end=null` if any ongoing; longest summary |
-| `education` | dedupe `(institution, normalized degree)`; longest field; end_year from latest source |
-| `provenance` | flat union |
-
-**Confidence.** Per-field scores feed a weighted `overall_confidence`
-(full_name .20, emails .15, phones .15, location .10, skills .20, experience .10,
-education .05, other .05). Name/email/phone use an agreement score over all
-observed values; experience/education penalize "year-mismatch" merges (0.6);
-location scores non-null fraction.
-
----
-
-## Configurable output (the "twist")
-
-A runtime config reshapes output with **no code changes**. Example
-(`projector/configs/custom_contact_card.json`):
-
-```json
-{
-  "fields": [
-    { "path": "full_name", "type": "string", "required": true },
-    { "path": "primary_email", "from": "emails[0]", "type": "string", "required": true },
-    { "path": "phone", "from": "phones[0]", "type": "string", "normalize": "E164" },
-    { "path": "skills", "from": "skills[].name", "type": "string[]", "normalize": "canonical" }
-  ],
-  "include_confidence": true,
-  "include_provenance": false,
-  "on_missing": "null"
-}
-```
-
-- **`from` grammar:** `location.city`, `emails[0]`, `experience[0].company`,
-  `skills[].name` (array-map), `links.other[]` (passthrough). More than one `[]`
-  → `"path not supported"`.
-- **`normalize`:** only `E164` / `canonical` / omitted are accepted; anything
-  else → `"<format> is not supported yet"` (hard error).
-- **`include_confidence` / `include_provenance`:** toggle `overall_confidence` +
-  `skills[].confidence`, and the `provenance` array + `skills[].sources`.
-- **`on_missing`:** `null` | `omit` | `error` (stderr + non-zero exit, no partial output).
-- Output is validated against a Pydantic model built from the field list.
-
----
-
-## Skills taxonomy (`parsers/utils/`)
-
-- `groupings.json` — canonical name → raw variants.
-- `generate_mappings.py` — **manual** seeding script; regenerates `mappings.json`
-  (run by hand after editing groupings; not part of the live pipeline).
-- `mappings.json` — reverse lookup for O(1) canonicalization.
-- `skills_canonicalizer.py` — looks up each skill; **auto-registers** unknown
-  skills (raw form becomes its own canonical key, written incrementally to both
-  JSON files). Keeps the taxonomy self-extending and runs deterministic.
-
----
-
-## Design decisions, assumptions & descoped items
-
-- **`candidate_id` is non-deterministic — by design.** It is Mongita's
-  auto-generated `_id`; re-running from an empty DB can assign new ids. Everything
-  else is byte-for-byte reproducible for the same input files (verified). Single-
-  winner fields are recomputed from the provenance log + a `source→procured_at`
-  map, so merges are order/depth independent.
-- **Mongita `$or` is broken** (returns 0 even for equality on mongita 1.2.0). The
-  spec's "emails OR phones" match is implemented as two `$in` queries unioned in
-  Python — same semantics, still on Mongita, so the auto-generated id is kept.
-- **Resume Part A uses pdf.js, not the full OpenResume TS extractor.** OpenResume
-  isn't published as a library; vendoring its whole TS pipeline was descoped under
-  the time budget. We use its underlying **pdf.js positional engine** (recovers
-  word spacing that naive text extraction loses) + a heading segmenter + PDF link
-  annotations (real LinkedIn/GitHub/portfolio URLs). Field semantics live in the
-  Python Part B. A `pdfplumber` fallback is available conceptually; pdf.js was
-  reliable here so it's the default.
-- **Resume PROJECTS are surfaced as `experience`** (company `null`, title = project
-  name). The provided resume has no formal work history, and this exercises real
-  date normalization (`"May 2026"`→`2026-05`, `"Present"`→`null`) and the
-  experience-merge path. Flagged here as a deliberate mapping choice.
-- **Internal merge bookkeeping** (`_start_years`, `_end_years`, `_end_year_time`)
-  rides on stored experience/education entries to keep year-mismatch confidence
-  and end_year selection correct across re-merges; the projector strips all
-  `_`-prefixed keys from output.
-- **Descoped:** ATS-JSON / GitHub / LinkedIn sources (one structured + one
-  unstructured implemented, as required); region inference for locations; a UI
-  (CLI only); the Stage-1 one-pager PDF (`__Eightfold.pdf`) is a separate
-  deliverable, not part of this code repo.
-
----
-
-## Layout
-
-```
-data_sources/{csvs,resumes}      input files
-parsers/
-  utils/                         normalizers, skills taxonomy + canonicalizer, record contract
-  csv_parser/                    structured-source parser
-  resume_parser/                 Part A (Node/pdf.js) + Part B (Python) + raw_json/
-merge_engine/                    models.py, db.py (Mongita store), merge.py
-projector/                       projector.py + configs/{default,custom_contact_card}.json
-shared_memory/{db,parsed_jsons}  Mongita storage + intermediate records (+ output_*.json)
-tests/                           pytest suite
-run_pipeline.py                  idempotent end-to-end runner
-```
+- **OpenResume over pyresparser:** OpenResume's structural, rule-based parsing reliably links nested chronological data (e.g., role → company → dates) and guarantees deterministic output, unlike pyresparser's flat entity lists.
+- **Archival over Hard Deletion:** Merged records are moved to `archive_profiles` rather than deleted, preserving a full audit trail for `provenance`.
+- **Procurement Timestamps:** A `procured_at` timestamp set at ingestion determines the winning value for single-value field conflicts.
+- **Deterministic ID Generation:** `candidate_id`s are generated deterministically from primary match keys, avoiding Mongita/MongoDB's probabilistic `_id` generation.

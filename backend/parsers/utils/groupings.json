@@ -1,0 +1,249 @@
+{
+  "AWS": [
+    "aws",
+    "amazon web services"
+  ],
+  "Algorithms": [
+    "Algorithms",
+    "algorithms"
+  ],
+  "Azure": [
+    "azure",
+    "microsoft azure"
+  ],
+  "Bash": [
+    "bash",
+    "shell"
+  ],
+  "C": [
+    "c"
+  ],
+  "C++": [
+    "c++",
+    "cpp",
+    "cplusplus"
+  ],
+  "C/C++": [
+    "C/C++",
+    "c/c++"
+  ],
+  "CI/CD Pipeline": [
+    "CI/CD Pipeline",
+    "ci/cdpipeline"
+  ],
+  "CS Fundamentals": [
+    "CS Fundamentals",
+    "csfundamentals"
+  ],
+  "CSS": [
+    "css",
+    "css3",
+    "vanilla css"
+  ],
+  "Computer Architecture": [
+    "Computer Architecture",
+    "computerarchitecture"
+  ],
+  "Computer Networks": [
+    "Computer Networks",
+    "computernetworks"
+  ],
+  "Concurrency": [
+    "Concurrency",
+    "concurrency"
+  ],
+  "DBMS": [
+    "DBMS",
+    "dbms"
+  ],
+  "Data Structures": [
+    "Data Structures",
+    "datastructures"
+  ],
+  "Deep Learning": [
+    "deep learning",
+    "dl"
+  ],
+  "Django": [
+    "django"
+  ],
+  "Docker": [
+    "docker"
+  ],
+  "Docker Swarm": [
+    "docker swarm",
+    "dockerswarm"
+  ],
+  "Express": [
+    "express",
+    "expressjs",
+    "express.js"
+  ],
+  "FastAPI": [
+    "fastapi",
+    "fast api"
+  ],
+  "Flask": [
+    "flask"
+  ],
+  "GCP": [
+    "gcp",
+    "google cloud",
+    "google cloud platform"
+  ],
+  "Git": [
+    "git"
+  ],
+  "Go": [
+    "go",
+    "golang"
+  ],
+  "Grafana": [
+    "Grafana",
+    "grafana"
+  ],
+  "GraphQL": [
+    "graphql"
+  ],
+  "HTML": [
+    "html",
+    "html5"
+  ],
+  "Java": [
+    "java"
+  ],
+  "JavaScript": [
+    "javascript",
+    "js",
+    "java script"
+  ],
+  "Kubernetes": [
+    "kubernetes",
+    "k8s"
+  ],
+  "Linux": [
+    "linux"
+  ],
+  "Machine Learning": [
+    "machine learning",
+    "ml"
+  ],
+  "MongoDB": [
+    "mongodb",
+    "mongo"
+  ],
+  "Multi-threading": [
+    "Multi-threading",
+    "multithreading"
+  ],
+  "MySQL": [
+    "mysql"
+  ],
+  "NLP": [
+    "nlp",
+    "natural language processing"
+  ],
+  "Next.js": [
+    "next",
+    "nextjs",
+    "next.js"
+  ],
+  "Nginx": [
+    "Nginx",
+    "nginx"
+  ],
+  "Node.js": [
+    "node",
+    "nodejs",
+    "node.js"
+  ],
+  "NumPy": [
+    "numpy"
+  ],
+  "OOPS": [
+    "OOPS",
+    "oops"
+  ],
+  "OS": [
+    "OS",
+    "os"
+  ],
+  "Pandas": [
+    "pandas"
+  ],
+  "Pgbouncer": [
+    "Pgbouncer",
+    "pgbouncer"
+  ],
+  "PostgreSQL": [
+    "postgresql",
+    "postgres",
+    "psql"
+  ],
+  "PyTorch": [
+    "pytorch",
+    "torch"
+  ],
+  "Python": [
+    "python",
+    "py",
+    "python3"
+  ],
+  "REST": [
+    "rest",
+    "rest api",
+    "restful"
+  ],
+  "React": [
+    "react",
+    "reactjs",
+    "react.js"
+  ],
+  "Redis": [
+    "redis"
+  ],
+  "Rust": [
+    "rust"
+  ],
+  "SQL": [
+    "sql"
+  ],
+  "Spring Boot": [
+    "spring boot",
+    "springboot",
+    "spring"
+  ],
+  "Supabase": [
+    "Supabase",
+    "supabase"
+  ],
+  "System Design": [
+    "System Design",
+    "systemdesign"
+  ],
+  "Tailwind CSS": [
+    "tailwind",
+    "tailwindcss",
+    "tailwind css"
+  ],
+  "TensorFlow": [
+    "tensorflow",
+    "tf"
+  ],
+  "Terraform": [
+    "Terraform",
+    "terraform"
+  ],
+  "TypeScript": [
+    "typescript",
+    "ts"
+  ],
+  "WebSockets": [
+    "WebSockets",
+    "websockets"
+  ],
+  "k6": [
+    "k6",
+    "k6"
+  ]
+}

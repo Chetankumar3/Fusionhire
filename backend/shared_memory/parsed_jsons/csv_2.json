@@ -1,0 +1,37 @@
+{
+  "source": "csv_2",
+  "method": "normalization",
+  "procured_at": "2026-06-30T19:28:49Z",
+  "total_source_points": 1,
+  "full_name": "Alice Johnson",
+  "emails": [
+    "alice.johnson@gmail.com"
+  ],
+  "phones": [
+    "+14155550123"
+  ],
+  "location": {
+    "city": null,
+    "region": null,
+    "country": null
+  },
+  "links": {
+    "linkedin": null,
+    "github": null,
+    "portfolio": null,
+    "other": []
+  },
+  "headline": null,
+  "years_experience": null,
+  "skills": [],
+  "experience": [
+    {
+      "company": "Google",
+      "title": "Software Engineer",
+      "start": null,
+      "end": null,
+      "summary": null
+    }
+  ],
+  "education": []
+}

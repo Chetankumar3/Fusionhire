@@ -1,0 +1,37 @@
+{
+  "source": "csv_5",
+  "method": "normalization",
+  "procured_at": "2026-06-30T19:28:49Z",
+  "total_source_points": 1,
+  "full_name": "Diana Lee",
+  "emails": [
+    "diana.lee@company.com"
+  ],
+  "phones": [
+    "+81312345678"
+  ],
+  "location": {
+    "city": null,
+    "region": null,
+    "country": null
+  },
+  "links": {
+    "linkedin": null,
+    "github": null,
+    "portfolio": null,
+    "other": []
+  },
+  "headline": null,
+  "years_experience": null,
+  "skills": [],
+  "experience": [
+    {
+      "company": "Amazon",
+      "title": "Engineering Manager",
+      "start": null,
+      "end": null,
+      "summary": null
+    }
+  ],
+  "education": []
+}

@@ -13,3 +13,4 @@ shared_memory/parsed_jsons/
 
 # Keep: parsers/resume_parser/raw_json/ (committed so the resume source works
 # without Node) and shared_memory/output_*.json (the produced sample output).
+personal/

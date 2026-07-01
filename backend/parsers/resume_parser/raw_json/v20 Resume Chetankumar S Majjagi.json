@@ -1,0 +1,165 @@
+{
+  "source_file": "v20 Resume Chetankumar S Majjagi.pdf",
+  "lines": [
+    "Chetankumar S Majjagi",
+    " +91 9148808717 | # chetanmajjagi3@gmail.com | ï LinkedIn | § GitHub | Portfoilo",
+    "Competitive Programming Profiles: Codeforces (Max: 1601) • CodeChef (Max: 1829) • LeetCode (2228)",
+    "INTRODUCTION",
+    "Backend Developer diving deep into the oceans of distributed architectures and high-level system design. Passionate about",
+    "building performance-focused, distributed, reliable, scalable applications and building & optimizing cloud Infra.",
+    "TECHNICAL SKILLS",
+    "• Languages: C/C++ (9.5/10), Python (8.5/10), JavaScript (8/10), SQL (9/10), Go (9/10)",
+    "• Web & Full Stack: React.js, Tailwind CSS, Python & FastAPI, PostgreSQL, MongoDB, Redis, WebSockets",
+    "• Tools, Infra & DevOps: AWS, GCP, Nginx, k6, Git, CI/CD Pipeline, Supabase, Pgbouncer, Docker Swarm, Terraform",
+    "• Core Concepts: Data Structures & Algorithms, CS Fundamentals, Concurrency & Multi-threading, System Design.",
+    "EDUCATION",
+    "International Institute of Information Technology, Naya Raipur Naya Raipur, India",
+    "Bachelor of Technology in Computer Science Engineering (CGPA: 8.56/10.00) 2023 – 2027 (Expected)",
+    "PROJECTS",
+    "Tradeforces: Distributed HFT Benchmarking System § Git repo with detail Readme May 2026–Jun 2026",
+    "• Engineered an 8-microservice evaluation platform, utilizing Kata Containers and AWS Firecracker to provision",
+    "hardware-isolated microVMs in 200–300ms with strict CPU pinning.",
+    "• Automated runtime image compilation via Google Cloud Build and dynamic K3s pod generation, enforcing strict pod affinity",
+    "to perfectly co-locate evaluation workloads.",
+    "• Developed a microsecond-precision Go Telemetry Gateway (7-goroutine pipeline) to dispatch raw FIX protocol orders over",
+    "TCP. Used complex state-mapping data structures to track single-trade lifecycles and calculate execution latency.",
+    "• Architected a high-throughput event pipeline leveraging Redpanda for strict order serialization and GCP Pub/Sub for",
+    "decentralized worker queues and dynamic backpressure management.",
+    "• Tech Stack: Go, FastAPI, React, GCS, Cloud Build, Redpanda, Pub/Sub, Postgres, Kubernetes (K3s), Docker, Terraform.",
+    "Ping: Distributed Real-Time Messaging System § Git repo with detail Readme Apr 2026-Present",
+    "• Engineered Ping, a real-time messaging system, by evolving a monolithic design into a scalable microservices architecture that",
+    "decouples the main API from the connection manager.",
+    "• Developed a co-locating FastAPI and gRPC servers in a single Python application to share memory for Websocket objects.",
+    "• Architected a Distributed system, enabling horizontal scaling with a Dynamic Nginx Load Balancer for the gateway and Redis",
+    "for the replica mapping and finding active replicas.",
+    "• In a high-concurrency k6 Load test with backend deployed as a multi-replica in a multi-instance setup, the system handled",
+    "8000 concurrent virtual users and P95 latency of 198ms on 6000 vus on a 5-core infra with Redis and Postgres GCP services.",
+    "• Tech Stack: Python, FastAPI, gRPC, Redis, ws, Postgres, k6, AWS, GCP, Nginx, CI/CD, PgBouncer, Docker Swarm, Terraform.",
+    "AI-Powered Relocation Survey Management System § Github Jan 2026-May 2026",
+    "• Digitalized the village relocation workflow, with the CV stage detection and a 4-step verification pipeline for transparency.",
+    "• Built an AI chatbot for real-time dynamic data analysis and visualization by plain-English queries, where the LLM generates",
+    "pseudo-queries routed through a validator layer to enforce role-based authorization and enhanced security.",
+    "• Tech Stack: React, Flutter, Python, Flask, MongoDB, OpenCV, AI/LLM Integration.",
+    "ACHIEVEMENTS & CODING PROfiLE",
+    "Competitive Programming",
+    "• Codeforces: Expert (1600+). 277, 956 ranks in contests.",
+    "• LeetCode: Guardian (2200+). Top 0.8% globally. Ranks: 311, 375, 569, 571 in contests.",
+    "• CodeChef: 4 star (1800+). Top 2% globally. Global ranks in contests: 137, 244.",
+    "Contest Performances",
+    "• ICPC 2025 Asia West Regionalist - Rank 100th/320 in Amritapuri region.",
+    "• Codefest IICPC Regionalist (2025): Ranked 203/17,000 in Round 1; 168/200 in Round 2.",
+    "• IIT Ropar COD-COM: Secured 11th place in the onsite final round."
+  ],
+  "sections": {
+    "HEADER": [
+      "Chetankumar S Majjagi",
+      " +91 9148808717 | # chetanmajjagi3@gmail.com | ï LinkedIn | § GitHub | Portfoilo",
+      "Competitive Programming Profiles: Codeforces (Max: 1601) • CodeChef (Max: 1829) • LeetCode (2228)"
+    ],
+    "INTRODUCTION": [
+      "Backend Developer diving deep into the oceans of distributed architectures and high-level system design. Passionate about",
+      "building performance-focused, distributed, reliable, scalable applications and building & optimizing cloud Infra."
+    ],
+    "TECHNICALSKILLS": [
+      "• Languages: C/C++ (9.5/10), Python (8.5/10), JavaScript (8/10), SQL (9/10), Go (9/10)",
+      "• Web & Full Stack: React.js, Tailwind CSS, Python & FastAPI, PostgreSQL, MongoDB, Redis, WebSockets",
+      "• Tools, Infra & DevOps: AWS, GCP, Nginx, k6, Git, CI/CD Pipeline, Supabase, Pgbouncer, Docker Swarm, Terraform",
+      "• Core Concepts: Data Structures & Algorithms, CS Fundamentals, Concurrency & Multi-threading, System Design."
+    ],
+    "EDUCATION": [
+      "International Institute of Information Technology, Naya Raipur Naya Raipur, India",
+      "Bachelor of Technology in Computer Science Engineering (CGPA: 8.56/10.00) 2023 – 2027 (Expected)"
+    ],
+    "PROJECTS": [
+      "Tradeforces: Distributed HFT Benchmarking System § Git repo with detail Readme May 2026–Jun 2026",
+      "• Engineered an 8-microservice evaluation platform, utilizing Kata Containers and AWS Firecracker to provision",
+      "hardware-isolated microVMs in 200–300ms with strict CPU pinning.",
+      "• Automated runtime image compilation via Google Cloud Build and dynamic K3s pod generation, enforcing strict pod affinity",
+      "to perfectly co-locate evaluation workloads.",
+      "• Developed a microsecond-precision Go Telemetry Gateway (7-goroutine pipeline) to dispatch raw FIX protocol orders over",
+      "TCP. Used complex state-mapping data structures to track single-trade lifecycles and calculate execution latency.",
+      "• Architected a high-throughput event pipeline leveraging Redpanda for strict order serialization and GCP Pub/Sub for",
+      "decentralized worker queues and dynamic backpressure management.",
+      "• Tech Stack: Go, FastAPI, React, GCS, Cloud Build, Redpanda, Pub/Sub, Postgres, Kubernetes (K3s), Docker, Terraform.",
+      "Ping: Distributed Real-Time Messaging System § Git repo with detail Readme Apr 2026-Present",
+      "• Engineered Ping, a real-time messaging system, by evolving a monolithic design into a scalable microservices architecture that",
+      "decouples the main API from the connection manager.",
+      "• Developed a co-locating FastAPI and gRPC servers in a single Python application to share memory for Websocket objects.",
+      "• Architected a Distributed system, enabling horizontal scaling with a Dynamic Nginx Load Balancer for the gateway and Redis",
+      "for the replica mapping and finding active replicas.",
+      "• In a high-concurrency k6 Load test with backend deployed as a multi-replica in a multi-instance setup, the system handled",
+      "8000 concurrent virtual users and P95 latency of 198ms on 6000 vus on a 5-core infra with Redis and Postgres GCP services.",
+      "• Tech Stack: Python, FastAPI, gRPC, Redis, ws, Postgres, k6, AWS, GCP, Nginx, CI/CD, PgBouncer, Docker Swarm, Terraform.",
+      "AI-Powered Relocation Survey Management System § Github Jan 2026-May 2026",
+      "• Digitalized the village relocation workflow, with the CV stage detection and a 4-step verification pipeline for transparency.",
+      "• Built an AI chatbot for real-time dynamic data analysis and visualization by plain-English queries, where the LLM generates",
+      "pseudo-queries routed through a validator layer to enforce role-based authorization and enhanced security.",
+      "• Tech Stack: React, Flutter, Python, Flask, MongoDB, OpenCV, AI/LLM Integration."
+    ],
+    "ACHIEVEMENTSCODINGPROFILE": [
+      "Competitive Programming",
+      "• Codeforces: Expert (1600+). 277, 956 ranks in contests.",
+      "• LeetCode: Guardian (2200+). Top 0.8% globally. Ranks: 311, 375, 569, 571 in contests.",
+      "• CodeChef: 4 star (1800+). Top 2% globally. Global ranks in contests: 137, 244.",
+      "Contest Performances",
+      "• ICPC 2025 Asia West Regionalist - Rank 100th/320 in Amritapuri region.",
+      "• Codefest IICPC Regionalist (2025): Ranked 203/17,000 in Round 1; 168/200 in Round 2.",
+      "• IIT Ropar COD-COM: Secured 11th place in the onsite final round."
+    ]
+  },
+  "links": [
+    {
+      "url": "tel:9148808717",
+      "anchor": " +91 9148808717 |"
+    },
+    {
+      "url": "mailto:chetanmajjagi3@gmail.com",
+      "anchor": "# chetanmajjagi3@gmail.com |"
+    },
+    {
+      "url": "https://www.linkedin.com/in/chetankumarSM/",
+      "anchor": "ï LinkedIn |"
+    },
+    {
+      "url": "https://github.com/Chetankumar3",
+      "anchor": "§ GitHub |"
+    },
+    {
+      "url": "http://16.112.64.12:8000/",
+      "anchor": "Portfoilo"
+    },
+    {
+      "url": "https://codeforces.com/profile/Chetan_21",
+      "anchor": "Codeforces (Max: 1601)"
+    },
+    {
+      "url": "https://www.codechef.com/users/not_chetan_21",
+      "anchor": "CodeChef (Max: 1829)"
+    },
+    {
+      "url": "https://leetcode.com/u/NotChetan_21/",
+      "anchor": "LeetCode (2228)"
+    },
+    {
+      "url": "https://github.com/Chetankumar3/Tradeforces",
+      "anchor": "§ Git repo with detail Readme"
+    },
+    {
+      "url": "http://16.112.64.12.nip.io/chatapp/login/credentials",
+      "anchor": "Ping: Distributed Real-Time Messaging System"
+    },
+    {
+      "url": "https://github.com/Chetankumar3/ChatApp",
+      "anchor": "§ Git repo with detail Readme"
+    },
+    {
+      "url": "villagerelocation-kkot.onrender.com/login.pdf#[0,{\"name\":\"Fit\"}]",
+      "anchor": "AI-Powered Relocation Survey Management System"
+    },
+    {
+      "url": "https://github.com/shreyomer10/villageRelocation",
+      "anchor": "§ Github"
+    }
+  ],
+  "raw_text": "Chetankumar S Majjagi\n +91 9148808717 | # chetanmajjagi3@gmail.com | ï LinkedIn | § GitHub | Portfoilo\nCompetitive Programming Profiles: Codeforces (Max: 1601) • CodeChef (Max: 1829) • LeetCode (2228)\nINTRODUCTION\nBackend Developer diving deep into the oceans of distributed architectures and high-level system design. Passionate about\nbuilding performance-focused, distributed, reliable, scalable applications and building & optimizing cloud Infra.\nTECHNICAL SKILLS\n• Languages: C/C++ (9.5/10), Python (8.5/10), JavaScript (8/10), SQL (9/10), Go (9/10)\n• Web & Full Stack: React.js, Tailwind CSS, Python & FastAPI, PostgreSQL, MongoDB, Redis, WebSockets\n• Tools, Infra & DevOps: AWS, GCP, Nginx, k6, Git, CI/CD Pipeline, Supabase, Pgbouncer, Docker Swarm, Terraform\n• Core Concepts: Data Structures & Algorithms, CS Fundamentals, Concurrency & Multi-threading, System Design.\nEDUCATION\nInternational Institute of Information Technology, Naya Raipur Naya Raipur, India\nBachelor of Technology in Computer Science Engineering (CGPA: 8.56/10.00) 2023 – 2027 (Expected)\nPROJECTS\nTradeforces: Distributed HFT Benchmarking System § Git repo with detail Readme May 2026–Jun 2026\n• Engineered an 8-microservice evaluation platform, utilizing Kata Containers and AWS Firecracker to provision\nhardware-isolated microVMs in 200–300ms with strict CPU pinning.\n• Automated runtime image compilation via Google Cloud Build and dynamic K3s pod generation, enforcing strict pod affinity\nto perfectly co-locate evaluation workloads.\n• Developed a microsecond-precision Go Telemetry Gateway (7-goroutine pipeline) to dispatch raw FIX protocol orders over\nTCP. Used complex state-mapping data structures to track single-trade lifecycles and calculate execution latency.\n• Architected a high-throughput event pipeline leveraging Redpanda for strict order serialization and GCP Pub/Sub for\ndecentralized worker queues and dynamic backpressure management.\n• Tech Stack: Go, FastAPI, React, GCS, Cloud Build, Redpanda, Pub/Sub, Postgres, Kubernetes (K3s), Docker, Terraform.\nPing: Distributed Real-Time Messaging System § Git repo with detail Readme Apr 2026-Present\n• Engineered Ping, a real-time messaging system, by evolving a monolithic design into a scalable microservices architecture that\ndecouples the main API from the connection manager.\n• Developed a co-locating FastAPI and gRPC servers in a single Python application to share memory for Websocket objects.\n• Architected a Distributed system, enabling horizontal scaling with a Dynamic Nginx Load Balancer for the gateway and Redis\nfor the replica mapping and finding active replicas.\n• In a high-concurrency k6 Load test with backend deployed as a multi-replica in a multi-instance setup, the system handled\n8000 concurrent virtual users and P95 latency of 198ms on 6000 vus on a 5-core infra with Redis and Postgres GCP services.\n• Tech Stack: Python, FastAPI, gRPC, Redis, ws, Postgres, k6, AWS, GCP, Nginx, CI/CD, PgBouncer, Docker Swarm, Terraform.\nAI-Powered Relocation Survey Management System § Github Jan 2026-May 2026\n• Digitalized the village relocation workflow, with the CV stage detection and a 4-step verification pipeline for transparency.\n• Built an AI chatbot for real-time dynamic data analysis and visualization by plain-English queries, where the LLM generates\npseudo-queries routed through a validator layer to enforce role-based authorization and enhanced security.\n• Tech Stack: React, Flutter, Python, Flask, MongoDB, OpenCV, AI/LLM Integration.\nACHIEVEMENTS & CODING PROfiLE\nCompetitive Programming\n• Codeforces: Expert (1600+). 277, 956 ranks in contests.\n• LeetCode: Guardian (2200+). Top 0.8% globally. Ranks: 311, 375, 569, 571 in contests.\n• CodeChef: 4 star (1800+). Top 2% globally. Global ranks in contests: 137, 244.\nContest Performances\n• ICPC 2025 Asia West Regionalist - Rank 100th/320 in Amritapuri region.\n• Codefest IICPC Regionalist (2025): Ranked 203/17,000 in Round 1; 168/200 in Round 2.\n• IIT Ropar COD-COM: Secured 11th place in the onsite final round."
+}

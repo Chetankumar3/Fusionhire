@@ -1,0 +1,166 @@
+{
+  "source_file": "v15 Resume Chetankumar S Majjagi.pdf",
+  "lines": [
+    "Chetankumar S Majjagi",
+    " +91 9148808717 | # chetanmajjagi3@gmail.com | ï LinkedIn | § GitHub | Portfoilo",
+    "Competitive Programming Profiles: Codeforces (Max: 1601) • CodeChef (Max: 1829) • LeetCode (2228)",
+    "INTRODUCTION",
+    "Competitive Programmer & Systems-focused Developer specialized in performance-critical C++, leveraging a 1,700+ problem",
+    "-solving foundation and strong CS Fundamentals to architect resource-efficient, hardware-aware software.",
+    "EDUCATION",
+    "International Institute of Information Technology, Naya Raipur Naya Raipur, India",
+    "Bachelor of Technology in Computer Science Engineering (CGPA: 8.56) 2023 – 2027 (Expected)",
+    "TECHNICAL SKILLS",
+    "• Languages: C++, C, Python, JavaScript, SQL",
+    "• Web & Backend: FastAPI, Express.js, PostgreSQL, MongoDB, Redis, WebSockets",
+    "• Tools & DevOps: AWS (EC2, S3, RDS, Lambda, VPC), Nginx, k6, Grafana, Git, CI/CD Pipeline, Supabase",
+    "• Frontend Development: React.js, Tailwind CSS",
+    "• Core Concepts: Data Structures & Algorithms, OOPS, DBMS, OS, Computer Networks, Computer Architecture",
+    "EXPERIENCE",
+    "Forest Assistance Platform (Govt. of Chhattisgarh) Remote",
+    "Full-Stack Developer Jan 2025 – Aug 2025",
+    "• Reduced processing delays from days to hours and enhanced analytics led to a 20-30% reduction in incidents.",
+    "• Developed a secure multi-portal system featuring application tracking for users and stage-wise approvals with analytics for",
+    "officials, enforced by a 6-tier Role-Based Access Control (RBAC) architecture.",
+    "PROJECTS",
+    "High-Concurrency Real-Time Chat Application § Git repo Present",
+    "• Performance & Scale: Learning to validate and enhance system scalability by engineering k6 load-testing scripts to simulate",
+    "thousands of concurrent connections, and visualizing real-time telemetry in Grafana.",
+    "• Architected a real-time messaging server using FastAPI and WebSockets, deployed on an AWS EC2 instance with an Nginx",
+    "reverse proxy to avoid cold starts of free cloud services and to optimize the usage of limited free EC2 hrs for multiple apps.",
+    "• Tech Stack/Tools: Python, FastAPI, AWS EC2, Nginx, k6, Grafana, SQLite, WebSockets, CI/CD Pipeline.",
+    "Hexagon — Immersive Learning Platform § Git repo Nov 2025",
+    "• Built a next-generation learning platform featuring 3D VR classrooms and real-time student interaction.",
+    "• Impact: Automated content workflows to generate scripts in seconds via GenAI. Also, achieved less than-50ms latency for",
+    "heavy 3D asset retrieval using Redis caching.",
+    "• Tech Stack/Tools: React, React Three Fiber, Node.js, MongoDB, Socket.IO, Google Gemini API, Redis.",
+    "SAAS - Seat Allotment & Admission Management System § Git repo Apr 2025",
+    "• Built a C++ Seat-Allotment engine for the University using advanced Data Structures to process multi-level quota logic.",
+    "• Impact: Handled data of 5,000+ applicants, reducing manual administrative work by approx. 80% and eliminating errors.",
+    "• Tech Stack: C++, Node.js, MongoDB, React.",
+    "ACHIEVEMENTS & CODING PROfiLE",
+    "Competitive Programming",
+    "• Codeforces: max. 1601 (Expert). Solved 1100+ problems.",
+    "• CodeChef: max. 1829 (4-Star). LeetCode: max. 2228 (Guardian).",
+    "• Selected for AlgoUniversity’s Accelerator Camp; solved 100+ high-difficulty algorithmic problems.",
+    "Contest Performances",
+    "• ACM-ICPC Regional Qualifier (2025): Secured rank 100/320 teams in ICPC Multi-Site Amritapuri Regionals.; Ranked 625/2248",
+    "teams & Institute Rank 2 in Prelims;",
+    "• Codefest IICPC (2025): Ranked 203/17,000 in Round 1; Ranked 168/200 in Round 2 (IIT Kharagpur).",
+    "• IIT Ropar COD-COM: Secured 11th place in the onsite final round.",
+    "• NIT Raipur DSA Marathon: Secured 7th place among 65+ teams."
+  ],
+  "sections": {
+    "HEADER": [
+      "Chetankumar S Majjagi",
+      " +91 9148808717 | # chetanmajjagi3@gmail.com | ï LinkedIn | § GitHub | Portfoilo",
+      "Competitive Programming Profiles: Codeforces (Max: 1601) • CodeChef (Max: 1829) • LeetCode (2228)"
+    ],
+    "INTRODUCTION": [
+      "Competitive Programmer & Systems-focused Developer specialized in performance-critical C++, leveraging a 1,700+ problem",
+      "-solving foundation and strong CS Fundamentals to architect resource-efficient, hardware-aware software."
+    ],
+    "EDUCATION": [
+      "International Institute of Information Technology, Naya Raipur Naya Raipur, India",
+      "Bachelor of Technology in Computer Science Engineering (CGPA: 8.56) 2023 – 2027 (Expected)"
+    ],
+    "TECHNICALSKILLS": [
+      "• Languages: C++, C, Python, JavaScript, SQL",
+      "• Web & Backend: FastAPI, Express.js, PostgreSQL, MongoDB, Redis, WebSockets",
+      "• Tools & DevOps: AWS (EC2, S3, RDS, Lambda, VPC), Nginx, k6, Grafana, Git, CI/CD Pipeline, Supabase",
+      "• Frontend Development: React.js, Tailwind CSS",
+      "• Core Concepts: Data Structures & Algorithms, OOPS, DBMS, OS, Computer Networks, Computer Architecture"
+    ],
+    "EXPERIENCE": [
+      "Forest Assistance Platform (Govt. of Chhattisgarh) Remote",
+      "Full-Stack Developer Jan 2025 – Aug 2025",
+      "• Reduced processing delays from days to hours and enhanced analytics led to a 20-30% reduction in incidents.",
+      "• Developed a secure multi-portal system featuring application tracking for users and stage-wise approvals with analytics for",
+      "officials, enforced by a 6-tier Role-Based Access Control (RBAC) architecture."
+    ],
+    "PROJECTS": [
+      "High-Concurrency Real-Time Chat Application § Git repo Present",
+      "• Performance & Scale: Learning to validate and enhance system scalability by engineering k6 load-testing scripts to simulate",
+      "thousands of concurrent connections, and visualizing real-time telemetry in Grafana.",
+      "• Architected a real-time messaging server using FastAPI and WebSockets, deployed on an AWS EC2 instance with an Nginx",
+      "reverse proxy to avoid cold starts of free cloud services and to optimize the usage of limited free EC2 hrs for multiple apps.",
+      "• Tech Stack/Tools: Python, FastAPI, AWS EC2, Nginx, k6, Grafana, SQLite, WebSockets, CI/CD Pipeline.",
+      "Hexagon — Immersive Learning Platform § Git repo Nov 2025",
+      "• Built a next-generation learning platform featuring 3D VR classrooms and real-time student interaction.",
+      "• Impact: Automated content workflows to generate scripts in seconds via GenAI. Also, achieved less than-50ms latency for",
+      "heavy 3D asset retrieval using Redis caching.",
+      "• Tech Stack/Tools: React, React Three Fiber, Node.js, MongoDB, Socket.IO, Google Gemini API, Redis.",
+      "SAAS - Seat Allotment & Admission Management System § Git repo Apr 2025",
+      "• Built a C++ Seat-Allotment engine for the University using advanced Data Structures to process multi-level quota logic.",
+      "• Impact: Handled data of 5,000+ applicants, reducing manual administrative work by approx. 80% and eliminating errors.",
+      "• Tech Stack: C++, Node.js, MongoDB, React."
+    ],
+    "ACHIEVEMENTSCODINGPROFILE": [
+      "Competitive Programming",
+      "• Codeforces: max. 1601 (Expert). Solved 1100+ problems.",
+      "• CodeChef: max. 1829 (4-Star). LeetCode: max. 2228 (Guardian).",
+      "• Selected for AlgoUniversity’s Accelerator Camp; solved 100+ high-difficulty algorithmic problems.",
+      "Contest Performances",
+      "• ACM-ICPC Regional Qualifier (2025): Secured rank 100/320 teams in ICPC Multi-Site Amritapuri Regionals.; Ranked 625/2248",
+      "teams & Institute Rank 2 in Prelims;",
+      "• Codefest IICPC (2025): Ranked 203/17,000 in Round 1; Ranked 168/200 in Round 2 (IIT Kharagpur).",
+      "• IIT Ropar COD-COM: Secured 11th place in the onsite final round.",
+      "• NIT Raipur DSA Marathon: Secured 7th place among 65+ teams."
+    ]
+  },
+  "links": [
+    {
+      "url": "tel:9148808717",
+      "anchor": " +91 9148808717 |"
+    },
+    {
+      "url": "mailto:chetanmajjagi3@gmail.com",
+      "anchor": "# chetanmajjagi3@gmail.com |"
+    },
+    {
+      "url": "https://www.linkedin.com/in/chetankumarSM/",
+      "anchor": "ï LinkedIn |"
+    },
+    {
+      "url": "https://github.com/Chetankumar3",
+      "anchor": "§ GitHub |"
+    },
+    {
+      "url": "http://16.112.64.12:8000/",
+      "anchor": "Portfoilo"
+    },
+    {
+      "url": "https://codeforces.com/profile/Chetan_21",
+      "anchor": "Codeforces (Max: 1601)"
+    },
+    {
+      "url": "https://www.codechef.com/users/not_chetan_21",
+      "anchor": "CodeChef (Max: 1829)"
+    },
+    {
+      "url": "https://leetcode.com/u/NotChetan_21/",
+      "anchor": "LeetCode (2228)"
+    },
+    {
+      "url": "http://16.112.64.12.nip.io/chatapp/recruiter/login",
+      "anchor": "High-Concurrency Real-Time Chat Application"
+    },
+    {
+      "url": "https://github.com/Chetankumar3/ChatApp",
+      "anchor": "§ Git repo"
+    },
+    {
+      "url": "https://hexagon-frontend-chi.vercel.app/",
+      "anchor": "Hexagon — Immersive Learning Platform"
+    },
+    {
+      "url": "https://github.com/Chetankumar3/Hexagon-Backendp",
+      "anchor": "§ Git repo"
+    },
+    {
+      "url": "https://github.com/Chetankumar3/Seat-Allotment-System",
+      "anchor": "§ Git repo"
+    }
+  ],
+  "raw_text": "Chetankumar S Majjagi\n +91 9148808717 | # chetanmajjagi3@gmail.com | ï LinkedIn | § GitHub | Portfoilo\nCompetitive Programming Profiles: Codeforces (Max: 1601) • CodeChef (Max: 1829) • LeetCode (2228)\nINTRODUCTION\nCompetitive Programmer & Systems-focused Developer specialized in performance-critical C++, leveraging a 1,700+ problem\n-solving foundation and strong CS Fundamentals to architect resource-efficient, hardware-aware software.\nEDUCATION\nInternational Institute of Information Technology, Naya Raipur Naya Raipur, India\nBachelor of Technology in Computer Science Engineering (CGPA: 8.56) 2023 – 2027 (Expected)\nTECHNICAL SKILLS\n• Languages: C++, C, Python, JavaScript, SQL\n• Web & Backend: FastAPI, Express.js, PostgreSQL, MongoDB, Redis, WebSockets\n• Tools & DevOps: AWS (EC2, S3, RDS, Lambda, VPC), Nginx, k6, Grafana, Git, CI/CD Pipeline, Supabase\n• Frontend Development: React.js, Tailwind CSS\n• Core Concepts: Data Structures & Algorithms, OOPS, DBMS, OS, Computer Networks, Computer Architecture\nEXPERIENCE\nForest Assistance Platform (Govt. of Chhattisgarh) Remote\nFull-Stack Developer Jan 2025 – Aug 2025\n• Reduced processing delays from days to hours and enhanced analytics led to a 20-30% reduction in incidents.\n• Developed a secure multi-portal system featuring application tracking for users and stage-wise approvals with analytics for\nofficials, enforced by a 6-tier Role-Based Access Control (RBAC) architecture.\nPROJECTS\nHigh-Concurrency Real-Time Chat Application § Git repo Present\n• Performance & Scale: Learning to validate and enhance system scalability by engineering k6 load-testing scripts to simulate\nthousands of concurrent connections, and visualizing real-time telemetry in Grafana.\n• Architected a real-time messaging server using FastAPI and WebSockets, deployed on an AWS EC2 instance with an Nginx\nreverse proxy to avoid cold starts of free cloud services and to optimize the usage of limited free EC2 hrs for multiple apps.\n• Tech Stack/Tools: Python, FastAPI, AWS EC2, Nginx, k6, Grafana, SQLite, WebSockets, CI/CD Pipeline.\nHexagon — Immersive Learning Platform § Git repo Nov 2025\n• Built a next-generation learning platform featuring 3D VR classrooms and real-time student interaction.\n• Impact: Automated content workflows to generate scripts in seconds via GenAI. Also, achieved less than-50ms latency for\nheavy 3D asset retrieval using Redis caching.\n• Tech Stack/Tools: React, React Three Fiber, Node.js, MongoDB, Socket.IO, Google Gemini API, Redis.\nSAAS - Seat Allotment & Admission Management System § Git repo Apr 2025\n• Built a C++ Seat-Allotment engine for the University using advanced Data Structures to process multi-level quota logic.\n• Impact: Handled data of 5,000+ applicants, reducing manual administrative work by approx. 80% and eliminating errors.\n• Tech Stack: C++, Node.js, MongoDB, React.\nACHIEVEMENTS & CODING PROfiLE\nCompetitive Programming\n• Codeforces: max. 1601 (Expert). Solved 1100+ problems.\n• CodeChef: max. 1829 (4-Star). LeetCode: max. 2228 (Guardian).\n• Selected for AlgoUniversity’s Accelerator Camp; solved 100+ high-difficulty algorithmic problems.\nContest Performances\n• ACM-ICPC Regional Qualifier (2025): Secured rank 100/320 teams in ICPC Multi-Site Amritapuri Regionals.; Ranked 625/2248\nteams & Institute Rank 2 in Prelims;\n• Codefest IICPC (2025): Ranked 203/17,000 in Round 1; Ranked 168/200 in Round 2 (IIT Kharagpur).\n• IIT Ropar COD-COM: Secured 11th place in the onsite final round.\n• NIT Raipur DSA Marathon: Secured 7th place among 65+ teams."
+}
