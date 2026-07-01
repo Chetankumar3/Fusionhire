@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+parsers/resume_parser/node_modules/
+
+# Pipeline intermediate state (regenerated every run)
+shared_memory/db/
+shared_memory/parsed_jsons/
+
+# Keep: parsers/resume_parser/raw_json/ (committed so the resume source works
+# without Node) and shared_memory/output_*.json (the produced sample output).

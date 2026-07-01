@@ -1,0 +1,6 @@
+mongita>=1.2.0
+pydantic>=2.0
+pdfplumber>=0.11
+phonenumbers>=9.0
+pycountry>=24.0
+pytest>=8.0

@@ -1,0 +1,193 @@
+You are an expert Principal Python Data Engineer. Your task is to build a robust, deterministic, and scalable multi-source candidate data transformer pipeline. I have a strict time limit, so we must prioritize clean architecture, correct logic, and working code over feature creep.
+
+Everything below is a final, fully-specified design. Do not improvise or fill gaps with your own judgment — if something genuinely isn't covered here, stop and ask rather than guessing.
+
+# 1. Project Context & Constraints
+- Goal: Ingest candidate profiles from multiple unstructured and structured sources, normalize them, deduplicate/merge them, and project them into a final canonical JSON schema based on a runtime config.
+- Constraints:
+  - Deterministic & explainable for a given set of input files: re-running the pipeline against the same input files must produce the same merged output (candidate_id is the one explicit exception — see Step 2).
+  - Must degrade gracefully (robust against garbage/missing data) — unknown values become null, never invented.
+  - Zero external database setup friction for the reviewer (`Mongita`, a file-based/in-memory embedded PyMongo alternative, for all state management).
+  - Use `pydantic` for final schema validation.
+  - **Mongita fallback:** if Mongita's query behavior (especially `$in` matching) misbehaves, timebox debugging to 20 minutes, then fall back to a plain JSON-file-backed dict store (`{candidate_id: profile_dict}`) behind the same get/find/insert/delete interface used by the merge engine. Do not lose more time than that to it.
+
+# 2. Existing Folder Structure
+├── data_sources
+│   ├── csvs
+│   └── resumes
+├── parsers
+│   ├── csv_parser
+│   ├── resume_parser
+│   └── utils
+├── shared_memory
+│   ├── db (Mongita local storage)
+│   └── parsed_jsons
+├── merge_engine
+├── projector
+└── run_pipeline.py
+
+# 3. Component Details & Implementation Steps
+
+## STEP 1: Parsers & Normalizers (`parsers/`)
+
+Each parser reads its dedicated folder inside `data_sources/`, normalizes via `parsers/utils/`, and writes one JSON file per detected record to `shared_memory/parsed_jsons/`. Formatting happens strictly here, never downstream.
+
+### Parser output contract (applies to every parser)
+Every parsed JSON record must have this exact top-level shape:
+```json
+{
+  "source": "csv_3",
+  "procured_at": "2026-06-12T00:00:00Z",
+  "total_source_points": 1,
+  "full_name": "...",
+  "emails": ["..."],
+  "phones": ["..."],
+  "location": { "city": null, "region": null, "country": null },
+  "links": { "linkedin": null, "github": null, "portfolio": null, "other": [] },
+  "headline": null,
+  "years_experience": null,
+  "skills": [ { "name": "...", "sources": ["csv_3"] } ],
+  "experience": [ { "company": "...", "title": "...", "start": "2022-01", "end": null, "summary": "..." } ],
+  "education": [ { "institution": "...", "degree": "...", "field": "...", "end_year": 2022 } ],
+  "provenance": [ { "field": "full_name", "value": "...", "source": "csv_3", "method": "normalization" } ]
+}
+```
+Rules:
+- `source`: identifies this exact record (`csv_<row_number>`, `resume_<filename>.pdf`). Used unchanged as the `source` value inside every provenance entry generated from this record — top-level `source` and inner provenance `source` are always identical for a given record.
+- `procured_at`: ISO-8601 UTC timestamp = the **input file's last-modified time** (`os.path.getmtime`), NOT `datetime.now()`. This must be stable across re-runs of the same input files, or merge-time winner selection (Step 2) becomes non-deterministic.
+- `total_source_points`: always `1` for a freshly parsed record. This is only ever changed by the merge engine, never by parsers.
+- `provenance`: one entry per field this record populated, format `{field, value, source, method}`. `method` is `"normalization"` for both CSV and resume parsers. Only emit an entry for fields that are non-null/non-empty.
+- `skills[].sources`: a list containing just this record's own `source` value (single-element list at parse time; grows only at merge time).
+- Leave fields null/empty if not present in this source. Never invent values.
+
+### CSV Parser (`parsers/csv_parser/`)
+- Pure Python script. Reads `data_sources/csvs/`, calls `parsers/utils/` functions, outputs per the contract above.
+- `source` = `csv_<row_number>`.
+
+### Resume Parser (`parsers/resume_parser/`)
+- Part A (TypeScript/Node): script using OpenResume's parsing engine reads PDFs from `data_sources/resumes/`, emits an intermediate raw JSON.
+  - **Timebox:** spend at most 60–90 minutes extracting/wiring OpenResume's engine. If it isn't producing clean JSON within that window, abandon it and fall back to a plain Python parser (`pdfplumber` + regex/heuristics for name/email/phone/sections). A simpler working parser beats a half-wired Node dependency. Note the fallback in your README either way.
+- Part B (Python): consumes the intermediate JSON, applies `parsers/utils/` functions, outputs per the contract above.
+- `source` = `resume_<filename>.pdf`.
+
+### Formatting Rules (`parsers/utils/`)
+- **Phones:** convert to E.164.
+- **Locations:** map to `{city, region, country}`, country as ISO-3166 alpha-2.
+- **Dates → always `YYYY-MM`:**
+  - `XX-XX-XXXX` → assume `DD-MM-YYYY`
+  - `XXXX-XX-XX` → assume `YYYY-MM-DD`
+  - `XX-XXXX-XX` → assume `DD-YYYY-MM`
+  - 2-component numeric (`MM-YYYY`, `MM/YYYY`, `YYYY-MM`, `YYYY/MM`) → detect which component is the 4-digit year, the other is month.
+  - Month name, full or abbreviated, with year, in either order (`"Jan 2022"`, `"January 2022"`, `"2022 Jan"`) → parse to `YYYY-MM`.
+  - `"present"`, `"current"`, `"ongoing"` (case-insensitive, any whitespace) → `null` (means "still ongoing", not "unknown").
+  - Anything else unparseable → `null`, never a guess.
+- Both `-` and `/` are valid delimiters throughout.
+
+### Skills Canonicalization (`parsers/utils/`)
+1. `groupings.json`: canonical key → array of raw variants that normalize to it. Normalization = lowercase, strip spaces and hyphens. Example: `{"javascript": ["javascript", "js"], "Docker Swarm": ["docker swarm", "dockerswarm"]}`.
+2. `generate_mappings.py`: manual developer script for **seeding**. Run by hand whenever you hand-edit `groupings.json` to regenerate `mappings.json` from scratch. Not invoked by the running pipeline.
+3. `mappings.json`: reverse lookup (normalized-or-raw-variant → canonical name) for O(1) lookup during a pipeline run.
+4. `skills_canonicalizer.py`: given an array of skill strings + the record's `source` value:
+   - Normalize each string (lowercase, strip spaces/hyphens) and look it up in `mappings.json`.
+   - **Found:** use the mapped canonical name. Output `{name: canonical_name, sources: [source]}`.
+   - **Not found (auto-registration, replaces any "log to a file" idea):**
+     - Append to `groupings.json`: `"<skill_name>": ["<skill_name>", "<normalized_skill_name>"]` (raw skill_name as written, as the new canonical key).
+     - Append to `mappings.json`: `"<skill_name>": "<skill_name>"` and `"<normalized_skill_name>": "<skill_name>"`.
+     - Use the plain raw `<skill_name>` (as typed) as the canonical name going forward.
+     - This is a direct incremental write to both files at runtime — it does not invoke `generate_mappings.py`.
+   - Caller guarantees no duplicate skill strings within a single parsed record, so each parser-stage skill object always has exactly one `source` in `sources`.
+
+## STEP 2: The Merge Engine (`merge_engine/`)
+
+Consumes all JSONs from `shared_memory/parsed_jsons/`, merges them into Mongita. Processing order across files does not need to be deterministic — the merge rules below are content-based, not order-based, so any processing order yields the same final profiles.
+
+### Database Flow & Collections
+- Two Mongita collections: `active_profiles`, `archive_profiles`.
+- For each incoming parsed record: query `active_profiles` for any document whose `emails` intersects the incoming `emails` (`$in`) OR whose `phones` intersects the incoming `phones`.
+- If match(es) found: delete the matched document(s) from `active_profiles`, insert them as-is into `archive_profiles` (plain backup copy, not referenced by anything downstream — just a safety net if you need to inspect pre-merge state later). Build one new merged document from {matched profile(s) + incoming record} and insert into `active_profiles`.
+- If no match: insert the incoming record as a new `active_profiles` document (after wrapping it into the canonical profile shape — `total_source_points` stays `1`, `skills[].sources` stays as-is, etc.).
+- `candidate_id` = whatever id Mongita auto-generates for the document. **This is a deliberate, documented exception to the determinism constraint** — re-running the pipeline from an empty DB can produce different ids for the same person across runs. Call this out explicitly in the design doc and README.
+
+### `total_source_points`
+- New merged document's `total_source_points` = sum of `total_source_points` of every document being merged together (the matched active-profile doc(s), each already carrying an accumulated count, plus the incoming record's `1`).
+
+### Per-field merge rules
+
+- **`full_name`, `headline`** (single winner required): among all non-null candidate values, pick the one from the source with the most recent `procured_at`. Tie-break: longer string wins. Final tie-break: alphabetically first.
+- **`location`**: pick the entire `{city, region, country}` object (not per-subfield) from the source with the most recent `procured_at`. If `procured_at` is missing/equal, pick the object with the most non-null fields out of the 3.
+- **`links`**: `linkedin`, `github`, `portfolio` each resolved independently using the same rule as `full_name` (latest `procured_at`, then longer string, then alphabetical). `other[]` is a union set.
+- **`emails`, `phones`**: union as a set, no exact duplicates.
+- **`years_experience`**: max of all non-null values.
+- **`skills`**: union by canonical name. When the same canonical skill appears in multiple merging documents, concatenate their `sources` lists (no need to dedupe — a given source contributes a skill at most once per the parser-stage guarantee). New confidence for that skill = `len(sources) / total_source_points` (this is always ≤ 1 by construction, since a source can appear in `sources` at most once and `total_source_points` counts every merged source).
+- **`experience`**: dedupe key = `(company, title)`. For colliding entries:
+  - `start` = earliest non-null start.
+  - `end` = `null` if **any** colliding entry has `end = null` (ongoing overrides a fixed end date), else the latest non-null end.
+  - `summary` = the longest non-null summary string.
+  - If the colliding entries' start years disagree, record an internal note that this entry is a "year-mismatch merge" (used only for the experience confidence score below) — do not block the merge, just flag it.
+- **`education`**: dedupe key = `(institution, normalized degree)`. For colliding entries:
+  - `field` = longest non-null string.
+  - `end_year`: if colliding entries disagree, flag as a "year-mismatch merge" (same purpose as above); the kept `end_year` is the one from the source with the most recent `procured_at`.
+- **`provenance`**: flat union, no hierarchy, no archive references. Format: `{field, value, source, method}`. Simply concatenate the `provenance` arrays of every document being merged (own + absorbed).
+
+### Per-field confidence functions (feed into `overall_confidence`)
+Each function below normalizes its inputs, compares them, and returns a 0–1 score. All fields not listed here default to a flat score of `1.0`.
+
+- **`full_name`** (and reuse identically for `emails`, `phones`): normalize all observed values for the field (lowercase, strip whitespace/punctuation; for phones use the E.164 string itself). Let `n` = total observed values, `d` = distinct normalized values.
+  - If `d < n` (some agreement exists): `score = (n - d) / n`.
+  - If `d == n` (zero agreement at all): `score = 0.7` flat (not 0 — name/contact variants across sources are common and shouldn't fully tank confidence).
+- **`location`**: `score = (non-null fields in the winning location object) / 3`.
+- **`experience`**: for each final experience entry, `1.0` if it wasn't a "year-mismatch merge", else `0.6`. Field score = average across all final entries (1.0 if there are none).
+- **`education`**: same pattern as experience (1.0 / 0.6 per entry on year-mismatch), averaged.
+- **`skills`**: average of all final per-skill confidences (1.0 if the profile has no skills).
+
+### `overall_confidence`
+Weighted sum of the field scores above:
+```
+WEIGHTS = {
+  "full_name": 0.20,
+  "emails": 0.15,
+  "phones": 0.15,
+  "location": 0.10,
+  "skills": 0.20,
+  "experience": 0.10,
+  "education": 0.05,
+  "other_fields": 0.05   # headline, years_experience, links — flat 1.0
+}
+overall_confidence = sum(weight * score for each entry above)
+```
+
+## STEP 3: The Projector (`projector/`)
+
+Reads a runtime config JSON, fetches the merged profile from Mongita, reshapes it, validates it, prints/writes JSON.
+
+### Config shape (extends the PS example with `include_provenance`)
+```json
+{
+  "fields": [ { "path": "...", "from": "...", "type": "...", "normalize": "...", "required": true } ],
+  "include_confidence": true,
+  "include_provenance": true,
+  "on_missing": "null"
+}
+```
+
+### `from` path grammar
+- Dot path for nested objects: `location.city`
+- Fixed array index: `emails[0]`, `experience[0].company`
+- Array map (flatten one sub-field across every item — only one `[]` per path, no nested `[]...[]`): `skills[].name`, `skills[].confidence`, `experience[].company`
+- Bare array passthrough: `links.other[]`
+- Any path needing more than one `[]` level (e.g. mapping into a nested array-of-arrays) is unsupported — raise `"path not supported"` and follow the `on_missing`/error contract below, since this schema has no such nesting anyway.
+
+### Behavior
+- **Field selection/renaming:** only emit fields listed in `config.fields`, using `path` as the output key and `from` (or `path` itself if `from` omitted) to locate the source value.
+- **Normalization check:** parsed data is already normalized, so the projector only validates the requested `normalize` value is one it supports (`"E164"`, `"canonical"`, or omitted). Anything else → `"<format> is not supported yet"` error, follow the `on_missing="error"` contract below regardless of what `on_missing` is set to (this is a config error, not a missing-data case).
+- **`include_confidence: false`**: strip `overall_confidence` and every `skills[].confidence`.
+- **`include_provenance: false`**: strip the top-level `provenance` array and every `skills[].sources`.
+- **`on_missing`:**
+  - `"null"`: emit the field with value `null`.
+  - `"omit"`: drop the key entirely from output.
+  - `"error"`: print a clear message to stderr naming the missing/failing field path, then exit with a non-zero status code. Do not continue and do not partially write output.
+- **Validation:** before printing/writing, validate the final dict against a Pydantic model built from the requested field list. Validation failure follows the same stderr-message + non-zero-exit contract as `on_missing: "error"`.
+
+---
+
+Begin by generating: (1) the Pydantic models — one for the internal canonical profile, one factory/builder for the dynamic projected-output model — and (2) the Mongita database initialization script inside `merge_engine/`. A sample CSV with header is present. For the resume parser, build Part A first, run it against the resume already provided, and use that intermediate JSON to build out Part B.

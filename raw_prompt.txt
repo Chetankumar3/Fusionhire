@@ -1,0 +1,102 @@
+I want you to generate a masterprompt for claude code vs code with clear instrcutions to build this asignment. But, lets discuss before generating master prompt. Below is my explanation of things will be done. Give any problems, conflicts... Also, I have asked 3 questions in between, answer them.
+
+There will be mainly 3 components:
+1. parser
+2. merge_engine
+3. projector
+
+
+parser:
+It will have all the lightwieght extractors that consume the data files inside data sources (from corresponding file) and extract the fileds and then call the functions inside utils folder to format and store, each field will have its own function. Also, add a field 'source' for every final entry in json. In resume parser, its just resume_<name of pdf>.
+The canonicalizing skills will be done like this:
+Inside utils there will be these files:
+1. groupings.json. It will have json in format of:
+{
+"javascript": ['javascript','js', 'js6', 'js5'],
+"Vanilla CSS": ['vanillacss','css'],
+"Docker": ['docker'],
+"Docker Swarm": ['docker swarm', 'dockerswarm']
+}
+keys will not be normalized, but array elements will be. Normalized means, just lowercasing and removing spaces and hyphens. Q1: Actually, review this normalizzation part in detail about should use ready python functions or write custom?
+2. generate_mappings.py. From groupings.json, creates mappings.json.
+3. mappings.json. Just reverse mapping, so can get single canonical version easily.
+4. skills_canonicalizer.py. a function that receives array of skills and return cnaonicalized version using mappings.json. If word is not found, then simply add that string in not_updated.json. it will have skills that do not match with anyone. Currently, it is just created not part of active pipeline yet.
+
+Note:
+- generate_mappings.py is not some active script. But, whenever groupings require update, after updating, developer will manually run the script to regenerate mappings.json.
+- Convert phones to E.164 format
+- Convert location to simple three fields (assume these three will be present in sources in same sequence): city, region, country (ISO-3166 alpha-2). region = region/state
+- Convert date to final format: YYYY-MM. Assume date format to be DD-MM-YYYY if date is also present.
+
+
+merge_engine:
+This will consume (do not delete later) all the json files inside 'shared_memory/parsed_jsons/'.
+Add candidates one by one. So, for each entry:
+- get all the candidates data in the DB whose either (email list has matching  email from curr_email list) or (phone number list has matching phone number from curr_phone list).
+- Generate a single entry by merging:
+full_name, location, headline: any non null value among all
+emails and phones: merge all emails and all phones (without exact duplicates)
+links: any one non null among all (indpendently for linkedin, github, portfolio). For 'others' links, merge like set (to ensure no exact duplicates).
+years_experience: max mon null among all
+skills: merge all, with addition of sources, source field will be in every json entry.
+Q2. Tell me what is the confidence mentioned in the problem statement in 'Default output schema' section. Is it cndaidate confidence score? Or data confidence score? although data confidence score doesnt seem to be applicable here.
+experience: find unique experiences using company + title, and merge
+education: find unique education using institution + degree, and merge
+provenance: append all in runtime
+overall_confidence: Q3. what is this?
+- add new single entry
+- delete all those old entries from candidate id
+
+
+projector:
+configs =>
+- select a subset of fields
+- rename/remap field, using 'from': this will have direct key from mongodb json as default value for 'from' or other types are: emails[0] or phones[0], skills[].name, skills[0], skills[0].name. (here the names must match)
+- set per field normalization: ignore this for now, currently already data is formatted and will support only those formats
+- toggle 'include_provenance'
+- toggle 'include_coincidence'
+- on_missing
+validation, ignore it with blank function right now, whcih will be called before printig the results in terminal.
+
+
+
+Current folder tree setup done by me:
+PS D:\IIIT Naya Raipur\Dev\Fusionhire> python .\folder_tree.py
+
+Directory tree for: D:\IIIT Naya Raipur\Dev\Fusionhire
+
+.
+
+├── Notes.txt
+
+├── PS.txt
+
+├── data_sources
+
+│   ├── csvs
+
+│   └── resumes
+
+├── folder_tree.py
+
+├── merge_engine
+
+├── parsers
+
+│   ├── csv_parser
+
+│   ├── resume_parser
+
+│   └── utils
+
+├── projector
+
+├── run_pipeline.py
+
+└── shared_memory
+
+    ├── db
+
+    └── parsed_jsons
+
+PS D:\IIIT Naya Raipur\Dev\Fusionhire> 
