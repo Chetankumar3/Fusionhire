@@ -1,18 +1,21 @@
 """The merge engine.
 
-Reads every parsed record from ``shared_memory/parsed_jsons/``, matches by
-email/phone intersection, and collapses matches into one canonical profile per
-candidate in Mongita's ``active_profiles`` collection, computing per-field and
-overall confidence.
+Reads every parsed record from ``shared_memory/parsed_jsons/`` and folds each
+into the DSU-style store (see ``db.py``): the incoming record is saved to
+``normalized_profiles``, every canonical profile it matches (by email/phone
+intersection) is gathered, and a fresh canonical profile is rebuilt **from
+scratch** out of the raw normalized records under those matches plus the incoming
+record — never from a previous canonical profile's already-merged values. The
+old canonicals are deleted and all their normalized records (plus the incoming
+one) are repointed to the new canonical.
 
 Determinism
 -----------
-Records are processed in sorted filename order, and matched docs are ordered by
-candidate_id, so a given set of input files always yields byte-identical merged
+Records are processed in sorted filename order and each merge set is sorted by
+``source``, so a given set of input files always yields byte-identical merged
 output *except* for ``candidate_id`` (Mongita's auto-generated id — the one
-documented exception). All single-winner selections (full_name, headline, links)
-are recomputed from the flat provenance log plus a ``source -> procured_at`` map,
-which makes them associative and therefore independent of merge order/depth.
+documented exception). Because each canonical is rebuilt from the full raw record
+set every time, merges are inherently order/depth independent.
 
 Internal bookkeeping
 --------------------
@@ -354,18 +357,35 @@ def run(reset: bool = True, store: Optional[ProfileStore] = None) -> ProfileStor
         store.reset()
 
     records = load_parsed_records()
-    source_time = {r["source"]: r.get("procured_at", "") for r in records}
 
     for rec in records:
-        matches = store.find_matches(rec.get("emails", []), rec.get("phones", []))
-        if matches:
-            store.archive_and_remove(matches)
-        matches.sort(key=lambda m: str(m.get("candidate_id", "")))
-        docs = matches + [rec]
-        merged = merge_documents(docs, source_time)
-        store.insert_active(merged)
+        # 1. Persist the incoming record to the raw audit trail (profile_of=null).
+        incoming_id = store.insert_normalized(rec)
 
-    print(f"[merge] {len(records)} record(s) -> {len(store.all_active())} active profile(s)")
+        # 2. Canonical profiles this record links to (email OR phone intersect).
+        cand_ids = store.find_canonical_ids_by_contact(
+            rec.get("emails", []), rec.get("phones", [])
+        )
+
+        # 3-4. All raw records under those canonicals + the incoming record.
+        matched_norm = store.normalized_by_profile_of(cand_ids)
+        merge_records = sorted(matched_norm + [rec], key=lambda r: r.get("source", ""))
+
+        # 5. Rebuild one canonical profile from scratch out of the raw records.
+        source_time = {r["source"]: r.get("procured_at", "") for r in merge_records}
+        canonical = merge_documents(merge_records, source_time)
+
+        # 6. Insert the new canonical -> new_candidate_id.
+        new_cid = store.insert_canonical(canonical)
+
+        # 7. Delete the now-absorbed canonical profiles.
+        store.delete_canonical(cand_ids)
+
+        # 8. Repoint every absorbed normalized record + the incoming one.
+        repoint_ids = [d.get("id") for d in matched_norm] + [incoming_id]
+        store.repoint(repoint_ids, new_cid)
+
+    print(f"[merge] {len(records)} record(s) -> {len(store.all_canonical())} canonical profile(s)")
     return store
 
 

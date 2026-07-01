@@ -1,23 +1,25 @@
-"""Mongita-backed profile store for the merge engine.
+"""Mongita-backed profile store (DSU-style).
 
 Collections
 -----------
-- ``active_profiles``  : the live, merged canonical profiles.
-- ``archive_profiles`` : plain pre-merge backups of any active doc absorbed by a
-  merge. Never referenced downstream — purely a safety net for inspection.
+- ``canonical_profiles`` — primary key ``candidate_id`` (Mongita auto ``_id``).
+  One document per merged identity. This is the ONLY collection the projector
+  reads from.
+- ``normalized_profiles`` — primary key ``id`` (Mongita auto ``_id``). One
+  document per raw parsed record, ever. Carries a foreign key ``profile_of`` ->
+  ``canonical_profiles.candidate_id``. These docs are never merged into each
+  other and never mutated except for ``profile_of`` being repointed. This is the
+  permanent raw audit trail — there is no separate archive collection.
 
-The store exposes the small get/find/insert/delete surface the merge engine
-needs. Keeping it behind this class means the documented Mongita->JSON fallback
-(see master_prompt.txt) could be swapped in without touching merge logic.
+Ingestion flow (per incoming parsed record) lives in ``merge.run`` and rebuilds
+each canonical profile from scratch out of the raw ``normalized_profiles``
+records — never from a previous canonical profile's already-merged values.
 
 Mongita ``$or`` is broken
 -------------------------
 Verified on mongita 1.2.0: a top-level ``$or`` returns zero matches even for
-plain equality, so the spec's "emails $in OR phones $in" query cannot be issued
-as a single ``$or``. Instead :meth:`find_matches` runs the two ``$in`` queries
-independently (both of which work correctly) and unions the results by ``_id``.
-This is semantically identical to the intended OR and stays on Mongita, so the
-auto-generated ``_id`` (used as ``candidate_id``) is preserved as the spec wants.
+plain equality. The "emails $in OR phones $in" match is therefore issued as two
+independent ``$in`` queries (both of which work) and unioned in Python.
 """
 
 from __future__ import annotations
@@ -35,6 +37,7 @@ while _d != os.path.dirname(_d):
         break
     _d = os.path.dirname(_d)
 
+from bson.objectid import ObjectId
 from mongita import MongitaClientDisk
 
 import paths
@@ -45,72 +48,95 @@ class ProfileStore:
         self._db_dir = db_dir or paths.DB_DIR
         self._client = MongitaClientDisk(self._db_dir)
         self._db = self._client.fusionhire
-        self.active = self._db.active_profiles
-        self.archive = self._db.archive_profiles
+        self.canonical = self._db.canonical_profiles
+        self.normalized = self._db.normalized_profiles
 
     # -- lifecycle ---------------------------------------------------------- #
 
     def reset(self) -> None:
-        """Drop both collections so a run starts from an empty DB (idempotent)."""
-        self._db.active_profiles.delete_many({})
-        self._db.archive_profiles.delete_many({})
+        """Empty both collections so a run starts fresh (idempotent)."""
+        self._db.canonical_profiles.delete_many({})
+        self._db.normalized_profiles.delete_many({})
 
-    # -- reads -------------------------------------------------------------- #
+    # -- normalized_profiles (raw audit trail) ------------------------------ #
 
-    def all_active(self) -> List[dict]:
-        return [self._with_id(d) for d in self.active.find({})]
+    def insert_normalized(self, record: dict) -> str:
+        """Insert a raw parsed record with ``profile_of=None``; return its ``id``."""
+        doc = {k: v for k, v in record.items() if k not in ("_id", "id")}
+        doc["profile_of"] = None
+        return str(self.normalized.insert_one(doc).inserted_id)
 
-    def find_matches(self, emails: Iterable[str], phones: Iterable[str]) -> List[dict]:
-        """Active docs whose emails intersect ``emails`` OR phones intersect ``phones``.
+    def normalized_by_profile_of(self, cand_ids: Iterable[str]) -> List[dict]:
+        """Every normalized record currently pointing at one of ``cand_ids``."""
+        cand_ids = [c for c in cand_ids if c]
+        if not cand_ids:
+            return []
+        return [self._norm_out(d) for d in self.normalized.find({"profile_of": {"$in": cand_ids}})]
 
-        Implemented as two separate ``$in`` queries unioned by ``_id`` because
-        Mongita's ``$or`` is non-functional (see module docstring).
+    def repoint(self, normalized_ids: Iterable[str], new_candidate_id: str) -> None:
+        """Set ``profile_of = new_candidate_id`` on the given normalized docs."""
+        for nid in normalized_ids:
+            if nid is None:
+                continue
+            self.normalized.update_one(
+                {"_id": self._oid(nid)}, {"$set": {"profile_of": new_candidate_id}}
+            )
+
+    # -- canonical_profiles ------------------------------------------------- #
+
+    def all_canonical(self) -> List[dict]:
+        return [self._with_id(d) for d in self.canonical.find({})]
+
+    def find_canonical_ids_by_contact(
+        self, emails: Iterable[str], phones: Iterable[str]
+    ) -> List[str]:
+        """candidate_ids of canonical docs whose emails OR phones intersect the args.
+
+        Two independent ``$in`` queries unioned by id (Mongita ``$or`` is broken).
         """
         emails = [e for e in emails if e]
         phones = [p for p in phones if p]
 
-        matched: dict[str, dict] = {}
+        found: dict[str, None] = {}  # ordered set of candidate_id strings
         if emails:
-            for doc in self.active.find({"emails": {"$in": emails}}):
-                matched[str(doc["_id"])] = self._with_id(doc)
+            for doc in self.canonical.find({"emails": {"$in": emails}}):
+                found[str(doc["_id"])] = None
         if phones:
-            for doc in self.active.find({"phones": {"$in": phones}}):
-                matched[str(doc["_id"])] = self._with_id(doc)
-        return list(matched.values())
+            for doc in self.canonical.find({"phones": {"$in": phones}}):
+                found[str(doc["_id"])] = None
+        return list(found.keys())
 
-    # -- writes ------------------------------------------------------------- #
+    def insert_canonical(self, profile: dict) -> str:
+        """Insert a merged canonical profile; return its new ``candidate_id``."""
+        doc = {k: v for k, v in profile.items() if k not in ("candidate_id", "_id")}
+        return str(self.canonical.insert_one(doc).inserted_id)
 
-    def insert_active(self, profile: dict) -> str:
-        """Insert a profile into active_profiles; return its candidate_id (_id)."""
-        doc = {k: v for k, v in profile.items() if k != "candidate_id"}
-        doc.pop("_id", None)
-        new_id = str(self.active.insert_one(doc).inserted_id)
-        return new_id
-
-    def archive_and_remove(self, docs: Iterable[dict]) -> None:
-        """Back up matched active docs into archive, then delete them from active."""
-        for doc in docs:
-            backup = {k: v for k, v in doc.items() if k not in ("_id", "candidate_id")}
-            self.archive.insert_one(backup)
-            cid = doc.get("candidate_id") or doc.get("_id")
-            if cid is not None:
-                self.active.delete_many({"_id": self._oid(cid)})
+    def delete_canonical(self, cand_ids: Iterable[str]) -> None:
+        for cid in cand_ids:
+            if cid is None:
+                continue
+            self.canonical.delete_one({"_id": self._oid(cid)})
 
     # -- helpers ------------------------------------------------------------ #
 
     @staticmethod
     def _with_id(doc: dict) -> dict:
-        """Return a copy with candidate_id set from _id and _id dropped."""
+        """Canonical doc -> copy with candidate_id (from _id), _id dropped."""
         out = dict(doc)
         if "_id" in out:
             out["candidate_id"] = str(out.pop("_id"))
         return out
 
     @staticmethod
-    def _oid(cid):
-        """Coerce a candidate_id string back to Mongita's ObjectId for querying."""
-        from bson.objectid import ObjectId
+    def _norm_out(doc: dict) -> dict:
+        """Normalized doc -> copy with id (from _id), _id dropped."""
+        out = dict(doc)
+        if "_id" in out:
+            out["id"] = str(out.pop("_id"))
+        return out
 
+    @staticmethod
+    def _oid(cid):
         if isinstance(cid, ObjectId):
             return cid
         try:
@@ -129,14 +155,20 @@ def init_store(reset: bool = False) -> ProfileStore:
 
 
 if __name__ == "__main__":
-    # Smoke test: prove the store initializes and the email/phone match works.
+    # Smoke test: insert two raw records for one person, verify the DSU wiring.
     s = init_store(reset=True)
-    cid = s.insert_active(
-        {"emails": ["a@x.com"], "phones": ["+111"], "full_name": "Test"}
-    )
-    print("inserted candidate_id:", cid)
-    print("match by email:", len(s.find_matches(["a@x.com"], [])))
-    print("match by phone:", len(s.find_matches([], ["+111"])))
-    print("no match:", len(s.find_matches(["nope@x.com"], ["+999"])))
+    r1 = {"source": "csv_1", "emails": ["a@x.com"], "phones": ["+111"], "full_name": "Test"}
+    r2 = {"source": "resume_x", "emails": ["a@x.com"], "phones": ["+222"], "full_name": "Test 2"}
+
+    id1 = s.insert_normalized(r1)
+    cids = s.find_canonical_ids_by_contact(r1["emails"], r1["phones"])
+    print("no canonical yet -> cand_ids:", cids)
+    cid = s.insert_canonical({"emails": ["a@x.com"], "phones": ["+111"]})
+    s.repoint([id1], cid)
+
+    id2 = s.insert_normalized(r2)
+    cids = s.find_canonical_ids_by_contact(r2["emails"], r2["phones"])
+    print("match by email -> cand_ids:", cids)
+    print("normalized under cand:", len(s.normalized_by_profile_of(cids)))
     s.reset()
-    print("after reset, active count:", len(s.all_active()))
+    print("after reset, canonical count:", len(s.all_canonical()))

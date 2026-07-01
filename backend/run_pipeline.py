@@ -127,7 +127,7 @@ def main(argv=None) -> int:
             return 1
         print(json.dumps(results, indent=2, ensure_ascii=False))
 
-    print(f"\nDone. {len(store.all_active())} canonical profile(s) in active_profiles.")
+    print(f"\nDone. {len(store.all_canonical())} canonical profile(s) in canonical_profiles.")
     return 0
 
 

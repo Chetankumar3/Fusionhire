@@ -26,7 +26,7 @@ def _run_pipeline_inprocess():
 
 def test_chetan_merges_across_csv_and_resume():
     store = _run_pipeline_inprocess()
-    profiles = store.all_active()
+    profiles = store.all_canonical()
 
     chetan = next((p for p in profiles if (p.get("full_name") or "").startswith("Chetan")), None)
     assert chetan is not None, "merged Chetan profile should exist"
@@ -54,4 +54,4 @@ def test_chetan_merges_across_csv_and_resume():
 def test_no_garbage_crash_on_distinct_candidates():
     store = _run_pipeline_inprocess()
     # 5 distinct people from 6 records (Chetan appears twice).
-    assert len(store.all_active()) == 5
+    assert len(store.all_canonical()) == 5

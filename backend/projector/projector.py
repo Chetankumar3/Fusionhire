@@ -209,7 +209,7 @@ def validate_projection(projected: dict, config: dict) -> dict:
 
 def project_all(config: dict, candidate_id: Optional[str] = None) -> List[dict]:
     store = init_store(reset=False)
-    profiles = store.all_active()
+    profiles = store.all_canonical()
     if candidate_id:
         profiles = [p for p in profiles if str(p.get("candidate_id")) == str(candidate_id)]
 
