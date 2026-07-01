@@ -2,7 +2,7 @@
 
 **Resources**
 - Architecture Diagram: [https://excalidraw.com/#json=PFlt79TtX9c9d3q-y9t82,CN9ed7eRT1S74Y3ZCVqX2A]
-- Demo Video: [Insert Demo Video URL Here]
+- Demo Video: [https://drive.google.com/file/d/11cXtcMPNcB0eht71M_1xblmjia1tpl2o/view?usp=sharing]
 
 ## Table of Contents
 1. [Overview](#1-overview)
