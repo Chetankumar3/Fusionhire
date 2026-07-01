@@ -7,7 +7,7 @@
     { "path": "linkedin", "from": "links.linkedin", "type": "string" },
     { "path": "skills", "from": "skills[].name", "type": "string[]", "normalize": "canonical" }
   ],
-  "include_confidence": true,
+  "include_confidence": false,
   "include_provenance": false,
   "on_missing": "null"
 }

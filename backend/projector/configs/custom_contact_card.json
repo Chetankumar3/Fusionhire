@@ -12,7 +12,7 @@
     { "path": "experience", "type": "object[]" },
     { "path": "education", "type": "object[]" }
   ],
-  "include_confidence": true,
-  "include_provenance": true,
+  "include_confidence": false,
+  "include_provenance": false,
   "on_missing": "omit"
 }

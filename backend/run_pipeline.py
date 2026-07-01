@@ -1,12 +1,4 @@
-"""FusionHire end-to-end pipeline runner (idempotent).
-
-Deletes intermediate artifacts from any previous run, then executes:
-    parse (CSV + resume) -> merge -> project
-
-Resume Part A (Node/pdf.js) regenerates the intermediate raw JSON when Node and
-its deps are available; otherwise the committed intermediate under
-`parsers/resume_parser/raw_json/` is reused so the resume source still flows.
-Every stage degrades gracefully: a missing/garbage source is skipped, not fatal.
+"""Idempotent list that deletes all intermediary files enerated in between before starting the run of the pipeline:
 
 Usage:
     python run_pipeline.py                       # full run, default + custom outputs

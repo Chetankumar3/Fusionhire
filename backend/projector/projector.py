@@ -129,67 +129,47 @@ def _strip_keys(obj, keys: set):
 def project_profile(data, on_missing_strategy):
     if isinstance(data, dict):
         processed_dict = {}
-        
         for key, value in data.items():
             processed_val = project_profile(value, on_missing_strategy)
             
-            is_absent = (
-                processed_val is None or 
-                processed_val == "" or 
-                processed_val == [] or 
-                processed_val == {}
-            )
+            # Check if this specific field value is effectively absent
+            is_absent = (processed_val is None or processed_val == "" or 
+                         processed_val == [] or processed_val == {})
             
-            if isinstance(processed_val, dict) and all(v is None for v in processed_val.values()):
-                is_absent = True
-                
-            if is_absent:
-                if on_missing_strategy == "error":
-                    raise ValueError(f"Missing value encountered at key: '{key}'")
-                elif on_missing_strategy == "omit":
-                    continue  # Skip adding this key entirely
-                elif on_missing_strategy == "null":
-                    processed_dict[key] = None
-            else:
+            if not is_absent:
                 processed_dict[key] = processed_val
-
-        if not processed_dict or all(v is None for v in processed_dict.values()):
+            elif on_missing_strategy == "error":
+                raise ValueError(f"Missing value encountered at key: '{key}'")
+            elif on_missing_strategy == "null":
+                processed_dict[key] = None
+            # If "omit", we just don't add the key to processed_dict
+        
+        # Determine if the parent object itself is now empty
+        if not processed_dict:
             return None if on_missing_strategy == "null" else {}
-
+        if all(v is None for v in processed_dict.values()):
+            return None if on_missing_strategy == "null" else {}
+            
         return processed_dict
 
     elif isinstance(data, list):
         processed_list = []
-        
         for item in data:
-            processed_item = project_profile(item, on_missing_strategy)
-            
-            is_absent = (
-                processed_item is None or 
-                processed_item == "" or 
-                processed_item == [] or 
-                processed_item == {}
-            )
-            
-            if isinstance(processed_item, dict) and all(v is None for v in processed_item.values()):
-                is_absent = True
-
-            if is_absent:
-                if on_missing_strategy == "error":
-                    raise ValueError("Missing value encountered inside an array.")
-                elif on_missing_strategy == "omit":
-                    continue
-                elif on_missing_strategy == "null":
-                    processed_list.append(None)
-            else:
-                processed_list.append(processed_item)
-
-        if not processed_list or all(v is None for v in processed_list):
+            val = project_profile(item, on_missing_strategy)
+            # Only append if it's not effectively absent or we are using "null"
+            if val is not None or on_missing_strategy == "null":
+                processed_list.append(val)
+        
+        if not processed_list:
             return None if on_missing_strategy == "null" else []
-
         return processed_list
 
     else:
+        # Base case: if data is None/empty at the literal level
+        if data in [None, ""]:
+            if on_missing_strategy == "error":
+                raise ValueError("Missing literal value.")
+            return None if on_missing_strategy == "null" else None
         return data
 
 
@@ -214,9 +194,14 @@ def project_all(config: dict, candidate_id: Optional[str] = None) -> List[dict]:
         profiles = [p for p in profiles if str(p.get("candidate_id")) == str(candidate_id)]
 
     results = []
+    # Extract the strategy string here, defaulting to "omit" if not provided
+    on_missing_strategy = config.get("on_missing", "omit") 
+    
     for profile in profiles:
-        projected = project_profile(profile, config)
+        # Pass the string, not the dictionary
+        projected = project_profile(profile, on_missing_strategy) 
         results.append(validate_projection(projected, config))
+        
     return results
 
 

@@ -1,76 +1,130 @@
 [
   {
-    "candidate_id": "6a44951ff13406553fda978c",
+    "candidate_id": "6a449f93fee5a8eef0632fe7",
+    "full_name": null,
     "emails": [
       "alice.johnson@gmail.com"
     ],
     "phones": [
       "+14155550123"
     ],
+    "location": null,
+    "links": null,
+    "headline": null,
+    "years_experience": null,
+    "skills": null,
     "experience": [
       {
         "company": "Google",
-        "title": "Software Engineer"
+        "title": "Software Engineer",
+        "start": null,
+        "end": null,
+        "summary": null,
+        "_start_years": null
       }
     ],
-    "overall_confidence": 0.9
+    "education": null,
+    "overall_confidence": 0.9,
+    "provenance": null
   },
   {
-    "candidate_id": "6a44951ff13406553fda978e",
+    "candidate_id": "6a449f93fee5a8eef0632fe9",
+    "full_name": null,
     "emails": [
       "bob.smith@outlook.com"
     ],
     "phones": [
       "+919876543210"
     ],
+    "location": null,
+    "links": null,
+    "headline": null,
+    "years_experience": null,
+    "skills": null,
     "experience": [
       {
         "company": "Microsoft",
-        "title": "Senior Backend Engineer"
+        "title": "Senior Backend Engineer",
+        "start": null,
+        "end": null,
+        "summary": null,
+        "_start_years": null
       }
     ],
-    "overall_confidence": 0.9
+    "education": null,
+    "overall_confidence": 0.9,
+    "provenance": null
   },
   {
-    "candidate_id": "6a44951ff13406553fda9790",
+    "candidate_id": "6a449f93fee5a8eef0632feb",
+    "full_name": null,
     "emails": [
       "charlie.brown@yahoo.com"
     ],
     "phones": [
       "+447700900123"
     ],
+    "location": null,
+    "links": null,
+    "headline": null,
+    "years_experience": null,
+    "skills": null,
     "experience": [
       {
-        "title": "Data Scientist"
+        "company": null,
+        "title": "Data Scientist",
+        "start": null,
+        "end": null,
+        "summary": null,
+        "_start_years": null
       }
     ],
-    "overall_confidence": 0.9
+    "education": null,
+    "overall_confidence": 0.9,
+    "provenance": null
   },
   {
-    "candidate_id": "6a44951ff13406553fda9792",
+    "candidate_id": "6a449f93fee5a8eef0632fed",
+    "full_name": null,
     "emails": [
       "diana.lee@company.com"
     ],
     "phones": [
       "+81312345678"
     ],
+    "location": null,
+    "links": null,
+    "headline": null,
+    "years_experience": null,
+    "skills": null,
     "experience": [
       {
         "company": "Amazon",
-        "title": "Engineering Manager"
+        "title": "Engineering Manager",
+        "start": null,
+        "end": null,
+        "summary": null,
+        "_start_years": null
       }
     ],
-    "overall_confidence": 0.9
+    "education": null,
+    "overall_confidence": 0.9,
+    "provenance": null
   },
   {
-    "candidate_id": "6a44951ff13406553fda9796",
+    "candidate_id": "6a449f93fee5a8eef0632ff1",
+    "full_name": null,
     "emails": [
       "chetanmajjagi3@gmail.com"
     ],
     "phones": [
       "+919148808717"
     ],
+    "location": null,
     "links": {
+      "linkedin": null,
+      "github": null,
+      "portfolio": null,
       "other": [
         "https://codeforces.com/profile/Chetan_21",
         "https://www.codechef.com/users/not_chetan_21",
@@ -86,6 +140,8 @@
         "https://github.com/shreyomer10/villageRelocation"
       ]
     },
+    "headline": null,
+    "years_experience": null,
     "skills": [
       {
         "name": "C++",
@@ -367,9 +423,15 @@
     ],
     "experience": [
       {
-        "title": "Software Engineer"
+        "company": null,
+        "title": "Software Engineer",
+        "start": null,
+        "end": null,
+        "summary": null,
+        "_start_years": null
       },
       {
+        "company": null,
         "title": "Tradeforces: Distributed HFT Benchmarking System",
         "start": "2026-05",
         "end": "2026-06",
@@ -379,14 +441,17 @@
         ]
       },
       {
+        "company": null,
         "title": "Ping: Distributed Real-Time Messaging System",
         "start": "2026-04",
+        "end": null,
         "summary": "Engineered Ping, a real-time messaging system, by evolving a monolithic design into a scalable microservices architecture that decouples the main API from the connection manager. Developed a co-locating FastAPI and gRPC servers in a single Python application to share memory for Websocket objects. Architected a Distributed system, enabling horizontal scaling with a Dynamic Nginx Load Balancer for the gateway and Redis for the replica mapping and finding active replicas. In a high-concurrency k6 Load test with backend deployed as a multi-replica in a multi-instance setup, the system handled 8000 concurrent virtual users and P95 latency of 198ms on 6000 vus on a 5-core infra with Redis and Postgres GCP services. Tech Stack: Python, FastAPI, gRPC, Redis, ws, Postgres, k6, AWS, GCP, Nginx, CI/CD, PgBouncer, Docker Swarm, Terraform.",
         "_start_years": [
           2026
         ]
       },
       {
+        "company": null,
         "title": "AI-Powered Relocation Survey Management System",
         "start": "2026-01",
         "end": "2026-05",
@@ -408,6 +473,7 @@
         "_end_year_time": "2026-06-16T14:04:03Z"
       }
     ],
-    "overall_confidence": 0.799099
+    "overall_confidence": 0.799099,
+    "provenance": null
   }
 ]

@@ -1,6 +1,6 @@
 [
   {
-    "candidate_id": "6a44951ff13406553fda978c",
+    "candidate_id": "6a449f93fee5a8eef0632fe7",
     "emails": [
       "alice.johnson@gmail.com"
     ],
@@ -12,11 +12,10 @@
         "company": "Google",
         "title": "Software Engineer"
       }
-    ],
-    "overall_confidence": 0.9
+    ]
   },
   {
-    "candidate_id": "6a44951ff13406553fda978e",
+    "candidate_id": "6a449f93fee5a8eef0632fe9",
     "emails": [
       "bob.smith@outlook.com"
     ],
@@ -28,11 +27,10 @@
         "company": "Microsoft",
         "title": "Senior Backend Engineer"
       }
-    ],
-    "overall_confidence": 0.9
+    ]
   },
   {
-    "candidate_id": "6a44951ff13406553fda9790",
+    "candidate_id": "6a449f93fee5a8eef0632feb",
     "emails": [
       "charlie.brown@yahoo.com"
     ],
@@ -43,11 +41,10 @@
       {
         "title": "Data Scientist"
       }
-    ],
-    "overall_confidence": 0.9
+    ]
   },
   {
-    "candidate_id": "6a44951ff13406553fda9792",
+    "candidate_id": "6a449f93fee5a8eef0632fed",
     "emails": [
       "diana.lee@company.com"
     ],
@@ -59,11 +56,10 @@
         "company": "Amazon",
         "title": "Engineering Manager"
       }
-    ],
-    "overall_confidence": 0.9
+    ]
   },
   {
-    "candidate_id": "6a44951ff13406553fda9796",
+    "candidate_id": "6a449f93fee5a8eef0632ff1",
     "emails": [
       "chetanmajjagi3@gmail.com"
     ],
@@ -407,7 +403,6 @@
         ],
         "_end_year_time": "2026-06-16T14:04:03Z"
       }
-    ],
-    "overall_confidence": 0.799099
+    ]
   }
 ]
