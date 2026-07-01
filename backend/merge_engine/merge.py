@@ -5,25 +5,26 @@ into the DSU-style store (see ``db.py``): the incoming record is saved to
 ``normalized_profiles``, every canonical profile it matches (by email/phone
 intersection) is gathered, and a fresh canonical profile is rebuilt **from
 scratch** out of the raw normalized records under those matches plus the incoming
-record — never from a previous canonical profile's already-merged values. The
-old canonicals are deleted and all their normalized records (plus the incoming
-one) are repointed to the new canonical.
+record. Old canonicals are deleted and their normalized records (plus the
+incoming one) repointed to the new canonical.
 
-Determinism
------------
-Records are processed in sorted filename order and each merge set is sorted by
-``source``, so a given set of input files always yields byte-identical merged
-output *except* for ``candidate_id`` (Mongita's auto-generated id — the one
-documented exception). Because each canonical is rebuilt from the full raw record
-set every time, merges are inherently order/depth independent.
+Merge contract (CHANGE 4)
+-------------------------
+Every per-field merge function takes ``records`` (the full raw list) and returns
+``{value, source, method, confidence}``. The orchestrator uses ``.value`` to
+assemble the canonical profile, ``.confidence`` for the weighted
+``overall_confidence``, and builds ``provenance`` as exactly one entry per
+top-level field: ``{field, value, source, method}``.
 
-Internal bookkeeping
---------------------
-Merged experience/education entries carry private ``_start_years`` / ``_end_years``
-lists (and ``_end_year_time``) used only to (a) detect "year-mismatch merges" for
-the confidence penalty and (b) keep end_year winner-selection correct across
-re-merges. These ``_``-prefixed keys never reach canonical output — the projector
-strips them.
+- Single-winner fields (full_name, headline, location, links.linkedin/github/
+  portfolio, years_experience) report the winning record's own source/method.
+- Union fields (emails, phones, links.other, experience, education, projects,
+  skills) are always tagged ``source="multiple"``, ``method="union"``.
+
+Determinism: files are processed in sorted order and each merge set is sorted by
+``source``; output is byte-identical across runs except ``candidate_id`` (Mongita
+auto id). Each canonical is rebuilt from the full raw record set every time, so
+merges are inherently order/depth independent.
 """
 
 from __future__ import annotations
@@ -33,7 +34,7 @@ import os
 import re
 import sys
 from collections import OrderedDict
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 _d = os.path.dirname(os.path.abspath(__file__))
 while _d != os.path.dirname(_d):
@@ -54,8 +55,10 @@ WEIGHTS = {
     "skills": 0.20,
     "experience": 0.10,
     "education": 0.05,
-    "other_fields": 0.05,  # headline, years_experience, links — flat 1.0
+    "other_fields": 0.05,  # headline, years_experience, links, projects — flat 1.0
 }
+
+_UNION = {"source": "multiple", "method": "union"}
 
 
 # --------------------------------------------------------------------------- #
@@ -71,6 +74,27 @@ def _union(items: List) -> List:
     return out
 
 
+def _present(v) -> bool:
+    return v not in (None, "", [], {})
+
+
+def _size(v) -> int:
+    return len(v) if isinstance(v, (list, tuple, dict, str)) else 0
+
+
+def _better(v_a, t_a, v_b, t_b) -> bool:
+    """Is (v_a @ t_a) a better single-winner than (v_b @ t_b)?
+
+    Order: later procured_at, then larger value (longer string / more elements),
+    then alphabetically-first by str(value).
+    """
+    if (t_a or "") != (t_b or ""):
+        return (t_a or "") > (t_b or "")
+    if _size(v_a) != _size(v_b):
+        return _size(v_a) > _size(v_b)
+    return str(v_a) < str(v_b)
+
+
 def _year_of(ym: Optional[str]) -> Optional[int]:
     if ym and re.match(r"^\d{4}", str(ym)):
         return int(str(ym)[:4])
@@ -81,167 +105,8 @@ def _norm_degree(value: Optional[str]) -> str:
     return re.sub(r"[^a-z0-9]", "", str(value).lower()) if value else ""
 
 
-def _prov_values(provenance: List[dict], field: str) -> List:
-    return [p["value"] for p in provenance if p.get("field") == field and p.get("value") is not None]
-
-
-def _is_better(a, b) -> bool:
-    """Total order for single-winner fields: later time > longer string > alpha-first."""
-    (va, ta), (vb, tb) = a, b
-    if (ta or "") != (tb or ""):
-        return (ta or "") > (tb or "")
-    if len(str(va)) != len(str(vb)):
-        return len(str(va)) > len(str(vb))
-    return str(va) < str(vb)
-
-
-def _winner_from_prov(provenance, field, source_time) -> Optional[str]:
-    cands = [
-        (p["value"], source_time.get(p["source"], ""))
-        for p in provenance
-        if p.get("field") == field and p.get("value")
-    ]
-    if not cands:
-        return None
-    best = cands[0]
-    for c in cands[1:]:
-        if _is_better(c, best):
-            best = c
-    return best[0]
-
-
-def _location_winner(provenance, source_time) -> dict:
-    empty = {"city": None, "region": None, "country": None}
-    cands = [
-        (p["value"], source_time.get(p["source"], ""))
-        for p in provenance
-        if p.get("field") == "location" and isinstance(p.get("value"), dict)
-    ]
-    if not cands:
-        return empty
-
-    def nonnull(loc):
-        return sum(1 for k in ("city", "region", "country") if loc.get(k))
-
-    best = cands[0]
-    for c in cands[1:]:
-        if (c[1] or "") > (best[1] or ""):  # most recent procured_at wins
-            best = c
-        elif (c[1] or "") == (best[1] or "") and nonnull(c[0]) > nonnull(best[0]):
-            best = c
-    return {k: best[0].get(k) for k in ("city", "region", "country")}
-
-
-# --------------------------------------------------------------------------- #
-# Per-field merges                                                             #
-# --------------------------------------------------------------------------- #
-
-
-def _merge_skills(docs, total_source_points) -> List[dict]:
-    m: "OrderedDict[str, List[str]]" = OrderedDict()
-    for d in docs:
-        for s in d.get("skills", []):
-            m.setdefault(s["name"], []).extend(s.get("sources", []))
-    return [
-        {"name": name, "sources": srcs, "confidence": len(srcs) / total_source_points}
-        for name, srcs in m.items()
-    ]
-
-
-def _merge_experience(docs) -> List[dict]:
-    g: "OrderedDict[tuple, dict]" = OrderedDict()
-    for d in docs:
-        for x in d.get("experience", []):
-            key = (x.get("company"), x.get("title"))
-            e = g.get(key)
-            if e is None:
-                e = {
-                    "company": x.get("company"),
-                    "title": x.get("title"),
-                    "starts": [],
-                    "ends": [],
-                    "has_null_end": False,
-                    "summaries": [],
-                    "years": set(),
-                }
-                g[key] = e
-            if x.get("start"):
-                e["starts"].append(x["start"])
-            if x.get("end"):
-                e["ends"].append(x["end"])
-            else:
-                e["has_null_end"] = True
-            if x.get("summary"):
-                e["summaries"].append(x["summary"])
-            sy = _year_of(x.get("start"))
-            if sy:
-                e["years"].add(sy)
-            for y in x.get("_start_years", []):
-                e["years"].add(y)
-
-    out = []
-    for e in g.values():
-        out.append(
-            {
-                "company": e["company"],
-                "title": e["title"],
-                "start": min(e["starts"]) if e["starts"] else None,
-                "end": None if e["has_null_end"] else (max(e["ends"]) if e["ends"] else None),
-                "summary": max(e["summaries"], key=len) if e["summaries"] else None,
-                "_start_years": sorted(e["years"]),
-            }
-        )
-    return out
-
-
-def _merge_education(docs, source_time) -> List[dict]:
-    g: "OrderedDict[tuple, dict]" = OrderedDict()
-    for d in docs:
-        doc_time = source_time.get(d.get("source", ""), "") if d.get("source") else ""
-        for ed in d.get("education", []):
-            key = (ed.get("institution"), _norm_degree(ed.get("degree")))
-            ed_time = ed.get("_end_year_time") or doc_time
-            e = g.get(key)
-            if e is None:
-                e = {
-                    "institution": ed.get("institution"),
-                    "degree": ed.get("degree"),
-                    "fields": [],
-                    "end_year": ed.get("end_year"),
-                    "end_year_time": ed_time,
-                    "end_years": set(),
-                }
-                g[key] = e
-            elif ed.get("end_year") is not None:
-                # end_year winner = source with most recent procured_at
-                if e["end_year"] is None or (ed_time or "") > (e["end_year_time"] or ""):
-                    e["end_year"] = ed.get("end_year")
-                    e["end_year_time"] = ed_time
-            if ed.get("field"):
-                e["fields"].append(ed["field"])
-            if ed.get("end_year") is not None:
-                e["end_years"].add(ed["end_year"])
-            for y in ed.get("_end_years", []):
-                e["end_years"].add(y)
-
-    out = []
-    for e in g.values():
-        out.append(
-            {
-                "institution": e["institution"],
-                "degree": e["degree"],
-                "field": max(e["fields"], key=len) if e["fields"] else None,
-                "end_year": e["end_year"],
-                "_end_years": sorted(e["end_years"]),
-                "_end_year_time": e["end_year_time"],
-            }
-        )
-    return out
-
-
-# --------------------------------------------------------------------------- #
-# Confidence                                                                   #
-# --------------------------------------------------------------------------- #
+def _norm_title(value: Optional[str]) -> str:
+    return re.sub(r"\s+", " ", str(value).strip().lower()) if value else ""
 
 
 def _agreement_score(values: List, is_phone: bool = False) -> float:
@@ -259,81 +124,319 @@ def _agreement_score(values: List, is_phone: bool = False) -> float:
     return 0.7  # zero agreement -> flat 0.7, not 0
 
 
-def _avg_year_mismatch(entries: List[dict], years_key: str) -> float:
-    if not entries:
-        return 1.0
-    scores = [0.6 if len(set(e.get(years_key, []))) > 1 else 1.0 for e in entries]
-    return sum(scores) / len(scores)
+def _winner(records, get) -> dict:
+    """Single-winner {value, source, method} over records for a scalar getter."""
+    cands = [(get(r), r.get("procured_at", ""), r) for r in records if _present(get(r))]
+    if not cands:
+        return {"value": None, "source": None, "method": None}
+    best = cands[0]
+    for c in cands[1:]:
+        if _better(c[0], c[1], best[0], best[1]):
+            best = c
+    return {"value": best[0], "source": best[2].get("source"), "method": best[2].get("method")}
 
 
-def _compute_overall_confidence(profile: dict, provenance: List[dict]) -> float:
-    fn = _agreement_score(_prov_values(provenance, "full_name"))
-    em = _agreement_score(_prov_values(provenance, "emails"))
-    ph = _agreement_score(_prov_values(provenance, "phones"), is_phone=True)
-
-    loc = profile["location"]
-    loc_score = sum(1 for k in ("city", "region", "country") if loc.get(k)) / 3
-
-    exp_score = _avg_year_mismatch(profile["experience"], "_start_years")
-    edu_score = _avg_year_mismatch(profile["education"], "_end_years")
-
-    skills = profile["skills"]
-    sk_score = sum(s["confidence"] for s in skills) / len(skills) if skills else 1.0
-
-    return round(
-        WEIGHTS["full_name"] * fn
-        + WEIGHTS["emails"] * em
-        + WEIGHTS["phones"] * ph
-        + WEIGHTS["location"] * loc_score
-        + WEIGHTS["skills"] * sk_score
-        + WEIGHTS["experience"] * exp_score
-        + WEIGHTS["education"] * edu_score
-        + WEIGHTS["other_fields"] * 1.0,
-        6,
-    )
+def _winner_scalar(cands: List[tuple]):
+    """Winner value over a list of (value, procured_at) pairs (for projects)."""
+    if not cands:
+        return None
+    best = cands[0]
+    for c in cands[1:]:
+        if _better(c[0], c[1], best[0], best[1]):
+            best = c
+    return best[0]
 
 
 # --------------------------------------------------------------------------- #
-# Document merge + run                                                         #
+# Per-field merge functions -> {value, source, method, confidence}            #
 # --------------------------------------------------------------------------- #
 
 
-def merge_documents(docs: List[dict], source_time: Dict[str, str]) -> dict:
-    """Collapse 1+ documents into one canonical profile dict (no candidate_id)."""
-    tsp = sum(int(d.get("total_source_points", 1)) for d in docs)
+def field_full_name(records) -> dict:
+    w = _winner(records, lambda r: r.get("full_name"))
+    w["confidence"] = _agreement_score([r.get("full_name") for r in records])
+    return w
 
-    provenance: List[dict] = []
-    for d in docs:
-        provenance.extend(d.get("provenance", []))
+
+def field_headline(records) -> dict:
+    w = _winner(records, lambda r: r.get("headline"))
+    w["confidence"] = 1.0
+    return w
+
+
+def field_emails(records) -> dict:
+    all_emails = [e for r in records for e in r.get("emails", [])]
+    return {"value": _union(all_emails), **_UNION, "confidence": _agreement_score(all_emails)}
+
+
+def field_phones(records) -> dict:
+    all_phones = [p for r in records for p in r.get("phones", [])]
+    return {
+        "value": _union(all_phones),
+        **_UNION,
+        "confidence": _agreement_score(all_phones, is_phone=True),
+    }
+
+
+def _location_nonnull(loc: dict) -> int:
+    return sum(1 for k in ("city", "region", "country") if loc.get(k))
+
+
+def field_location(records) -> dict:
+    empty = {"city": None, "region": None, "country": None}
+    cands = [
+        (r.get("location") or {}, r.get("procured_at", ""), r)
+        for r in records
+        if _location_nonnull(r.get("location") or {}) > 0
+    ]
+    if not cands:
+        return {"value": empty, "source": None, "method": None, "confidence": 0.0}
+    best = cands[0]
+    for c in cands[1:]:
+        if (c[1] or "") > (best[1] or ""):  # most recent procured_at wins
+            best = c
+        elif (c[1] or "") == (best[1] or "") and _location_nonnull(c[0]) > _location_nonnull(best[0]):
+            best = c
+    loc = {k: best[0].get(k) for k in ("city", "region", "country")}
+    return {
+        "value": loc,
+        "source": best[2].get("source"),
+        "method": best[2].get("method"),
+        "confidence": _location_nonnull(loc) / 3,
+    }
+
+
+def field_links(records, key: str) -> dict:
+    w = _winner(records, lambda r: (r.get("links") or {}).get(key))
+    w["confidence"] = 1.0
+    return w
+
+
+def field_links_other(records) -> dict:
+    val = _union([o for r in records for o in (r.get("links") or {}).get("other", [])])
+    return {"value": val, **_UNION, "confidence": 1.0}
+
+
+def field_years_experience(records) -> dict:
+    pairs = [(r.get("years_experience"), r) for r in records if r.get("years_experience") is not None]
+    if not pairs:
+        return {"value": None, "source": None, "method": None, "confidence": 1.0}
+    mx = max(v for v, _ in pairs)
+    # winner among records holding the max value; tie-break alphabetically by source
+    winner = sorted((r for v, r in pairs if v == mx), key=lambda r: str(r.get("source", "")))[0]
+    return {"value": mx, "source": winner.get("source"), "method": winner.get("method"), "confidence": 1.0}
+
+
+def field_skills(records) -> dict:
+    tsp = len(records)
+    m: "OrderedDict[str, List[str]]" = OrderedDict()
+    for r in records:
+        for s in r.get("skills", []):
+            m.setdefault(s["name"], []).extend(s.get("sources", []))
+    skills = [
+        {"name": name, "sources": srcs, "confidence": len(srcs) / tsp} for name, srcs in m.items()
+    ]
+    conf = sum(s["confidence"] for s in skills) / len(skills) if skills else 1.0
+    return {"value": skills, **_UNION, "confidence": conf}
+
+
+def field_experience(records) -> dict:
+    g: "OrderedDict[tuple, dict]" = OrderedDict()
+    for r in records:
+        for x in r.get("experience", []):
+            key = (x.get("company"), x.get("title"))
+            e = g.setdefault(
+                key,
+                {
+                    "company": x.get("company"),
+                    "title": x.get("title"),
+                    "starts": [],
+                    "ends": [],
+                    "has_null_end": False,
+                    "summaries": [],
+                    "years": set(),
+                },
+            )
+            if x.get("start"):
+                e["starts"].append(x["start"])
+            if x.get("end"):
+                e["ends"].append(x["end"])
+            else:
+                e["has_null_end"] = True
+            if x.get("summary"):
+                e["summaries"].append(x["summary"])
+            sy = _year_of(x.get("start"))
+            if sy:
+                e["years"].add(sy)
+
+    entries, scores = [], []
+    for e in g.values():
+        entries.append(
+            {
+                "company": e["company"],
+                "title": e["title"],
+                "start": min(e["starts"]) if e["starts"] else None,
+                "end": None if e["has_null_end"] else (max(e["ends"]) if e["ends"] else None),
+                "summary": max(e["summaries"], key=len) if e["summaries"] else None,
+            }
+        )
+        scores.append(0.6 if len(e["years"]) > 1 else 1.0)  # start-year mismatch
+    conf = sum(scores) / len(scores) if scores else 1.0
+    return {"value": entries, **_UNION, "confidence": conf}
+
+
+def field_education(records) -> dict:
+    """Dedupe by (institution, normalized degree). Simplified per CHANGE 3:
+    end_year winner is read straight off the record's own procured_at."""
+    g: "OrderedDict[tuple, dict]" = OrderedDict()
+    for r in records:
+        pa = r.get("procured_at")
+        for ed in r.get("education", []):
+            key = (ed.get("institution"), _norm_degree(ed.get("degree")))
+            e = g.setdefault(
+                key,
+                {"institution": ed.get("institution"), "degrees": [], "fields": [], "end_pairs": []},
+            )
+            if ed.get("degree"):
+                e["degrees"].append(ed["degree"])
+            if ed.get("field"):
+                e["fields"].append(ed["field"])
+            if ed.get("end_year") is not None:
+                e["end_pairs"].append((ed["end_year"], pa))
+
+    entries, scores = [], []
+    for e in g.values():
+        pairs = e["end_pairs"]
+        with_pa = [(y, pa) for y, pa in pairs if pa]
+        if with_pa:
+            end_year = max(with_pa, key=lambda yp: yp[1])[0]  # latest procured_at
+        elif pairs:
+            end_year = pairs[0][0]  # no timestamps: first non-null (order not guaranteed)
+        else:
+            end_year = None
+        entries.append(
+            {
+                "institution": e["institution"],
+                "degree": max(e["degrees"], key=len) if e["degrees"] else None,
+                "field": max(e["fields"], key=len) if e["fields"] else None,
+                "end_year": end_year,
+            }
+        )
+        distinct = {y for y, _ in pairs}
+        scores.append(0.6 if len(distinct) > 1 else 1.0)  # end-year mismatch
+    conf = sum(scores) / len(scores) if scores else 1.0
+    return {"value": entries, **_UNION, "confidence": conf}
+
+
+def field_projects(records) -> dict:
+    """Dedupe by normalized title. description/tech_stack each single-winner
+    (latest procured_at; tie longer/more-elements; then alpha). No mismatch."""
+    g: "OrderedDict[str, dict]" = OrderedDict()
+    for r in records:
+        pa = r.get("procured_at", "")
+        for p in r.get("projects", []):
+            key = _norm_title(p.get("title"))
+            e = g.setdefault(key, {"title": p.get("title"), "desc": [], "tech": []})
+            if p.get("description"):
+                e["desc"].append((p["description"], pa))
+            if p.get("tech_stack"):
+                e["tech"].append((p["tech_stack"], pa))
+
+    entries = []
+    for e in g.values():
+        entries.append(
+            {
+                "title": e["title"],
+                "description": _winner_scalar(e["desc"]),
+                "tech_stack": _winner_scalar(e["tech"]) or [],
+            }
+        )
+    return {"value": entries, **_UNION, "confidence": 1.0}
+
+
+# --------------------------------------------------------------------------- #
+# Orchestration                                                                #
+# --------------------------------------------------------------------------- #
+
+def merge_documents(records: List[dict]) -> dict:
+    """Rebuild one canonical profile from scratch out of raw ``records``."""
+    tsp = len(records)
+
+    fn = field_full_name(records)
+    hl = field_headline(records)
+    em = field_emails(records)
+    ph = field_phones(records)
+    loc = field_location(records)
+    yrs = field_years_experience(records)
+    sk = field_skills(records)
+    exp = field_experience(records)
+    edu = field_education(records)
+    prj = field_projects(records)
+    li = field_links(records, "linkedin")
+    gh = field_links(records, "github")
+    pf = field_links(records, "portfolio")
+    other = field_links_other(records)
 
     profile = {
-        "full_name": _winner_from_prov(provenance, "full_name", source_time),
-        "emails": _union([e for d in docs for e in d.get("emails", [])]),
-        "phones": _union([p for d in docs for p in d.get("phones", [])]),
-        "location": _location_winner(provenance, source_time),
+        "full_name": fn["value"],
+        "emails": em["value"],
+        "phones": ph["value"],
+        "location": loc["value"],
         "links": {
-            "linkedin": _winner_from_prov(provenance, "links.linkedin", source_time),
-            "github": _winner_from_prov(provenance, "links.github", source_time),
-            "portfolio": _winner_from_prov(provenance, "links.portfolio", source_time),
-            "other": _union([o for d in docs for o in d.get("links", {}).get("other", [])]),
+            "linkedin": li["value"],
+            "github": gh["value"],
+            "portfolio": pf["value"],
+            "other": other["value"],
         },
-        "headline": _winner_from_prov(provenance, "headline", source_time),
-        "years_experience": _max_or_none(
-            [d.get("years_experience") for d in docs]
-        ),
-        "skills": _merge_skills(docs, tsp),
-        "experience": _merge_experience(docs),
-        "education": _merge_education(docs, source_time),
-        "provenance": provenance,
-        "total_source_points": tsp,
+        "headline": hl["value"],
+        "years_experience": yrs["value"],
+        "skills": sk["value"],
+        "experience": exp["value"],
+        "education": edu["value"],
+        "projects": prj["value"],
+        "total_source_points": tsp,  # derived metadata only
     }
-    profile["overall_confidence"] = _compute_overall_confidence(profile, provenance)
+
+    # Provenance: exactly one entry per top-level field.
+    def entry(field, res, value=None):
+        return {
+            "field": field,
+            "value": res["value"] if value is None else value,
+            "source": res["source"],
+            "method": res["method"],
+        }
+
+    profile["provenance"] = [
+        entry("full_name", fn),
+        entry("emails", em),
+        entry("phones", ph),
+        entry("location", loc),
+        entry("headline", hl),
+        entry("years_experience", yrs),
+        entry("links.linkedin", li),
+        entry("links.github", gh),
+        entry("links.portfolio", pf),
+        entry("links.other", other),
+        entry("experience", exp),
+        entry("education", edu),
+        entry("projects", prj),
+        # skills provenance value = list of canonical skill names (per-skill
+        # `sources` lists live on the skill objects themselves, unchanged).
+        entry("skills", sk, value=[s["name"] for s in sk["value"]]),
+    ]
+
+    profile["overall_confidence"] = round(
+        WEIGHTS["full_name"] * fn["confidence"]
+        + WEIGHTS["emails"] * em["confidence"]
+        + WEIGHTS["phones"] * ph["confidence"]
+        + WEIGHTS["location"] * loc["confidence"]
+        + WEIGHTS["skills"] * sk["confidence"]
+        + WEIGHTS["experience"] * exp["confidence"]
+        + WEIGHTS["education"] * edu["confidence"]
+        + WEIGHTS["other_fields"] * 1.0,  # headline, years, links, projects
+        6,
+    )
     return profile
-
-
-def _max_or_none(values):
-    nums = [v for v in values if v is not None]
-    return max(nums) if nums else None
 
 
 def load_parsed_records() -> List[dict]:
@@ -372,8 +475,7 @@ def run(reset: bool = True, store: Optional[ProfileStore] = None) -> ProfileStor
         merge_records = sorted(matched_norm + [rec], key=lambda r: r.get("source", ""))
 
         # 5. Rebuild one canonical profile from scratch out of the raw records.
-        source_time = {r["source"]: r.get("procured_at", "") for r in merge_records}
-        canonical = merge_documents(merge_records, source_time)
+        canonical = merge_documents(merge_records)
 
         # 6. Insert the new canonical -> new_candidate_id.
         new_cid = store.insert_canonical(canonical)

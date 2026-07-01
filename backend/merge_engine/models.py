@@ -66,17 +66,51 @@ class Education(BaseModel):
     end_year: Optional[int] = None
 
 
-class ProvenanceEntry(BaseModel):
-    """One observation of one field from one source.
+class ProjectEntry(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    tech_stack: List[str] = Field(default_factory=list)
 
-    The full provenance array is the flat union of every observation across every
-    merged source, and doubles as the agreement log used by the confidence
-    functions for full_name / emails / phones.
+
+class ProvenanceEntry(BaseModel):
+    """Provenance for one canonical field, regenerated at merge time.
+
+    One entry per top-level field, always. For single-winner fields `source`/
+    `method` are the winning record's own; for union fields they are the sentinels
+    `source="multiple"`, `method="union"`. `value` mirrors what the field resolved
+    to (scalar, object, or list — e.g. the list of canonical skill names).
     """
 
     field: str
+    value: Any = None
+    source: Optional[str] = None
+    method: Optional[str] = None
+
+
+class NormalizedRecord(BaseModel):
+    """One raw parsed record (a ``normalized_profiles`` document, sans ids).
+
+    Carries the flat `source` / `method` / `procured_at` provenance fields the
+    merge engine consumes. No `provenance` array and no `total_source_points` —
+    both are derived by the merge engine, not the parsers.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
     source: str
     method: str
+    procured_at: Optional[str] = None
+    full_name: Optional[str] = None
+    emails: List[str] = Field(default_factory=list)
+    phones: List[str] = Field(default_factory=list)
+    location: Location = Field(default_factory=Location)
+    links: Links = Field(default_factory=Links)
+    headline: Optional[str] = None
+    years_experience: Optional[float] = None
+    skills: List[Skill] = Field(default_factory=list)
+    experience: List[Experience] = Field(default_factory=list)
+    education: List[Education] = Field(default_factory=list)
+    projects: List[ProjectEntry] = Field(default_factory=list)
 
 
 class CanonicalProfile(BaseModel):
@@ -84,9 +118,11 @@ class CanonicalProfile(BaseModel):
 
     `candidate_id` is Mongita's auto-generated `_id` (a deliberate, documented
     exception to determinism: re-running from an empty DB may assign new ids).
+    `total_source_points` is kept here only as derived debugging metadata
+    (= number of raw records merged); it is not a pipeline input.
     """
 
-    model_config = ConfigDict(extra="ignore")  # tolerate private "_*" merge keys
+    model_config = ConfigDict(extra="ignore")
 
     candidate_id: Optional[str] = None
     full_name: Optional[str] = None
@@ -99,6 +135,7 @@ class CanonicalProfile(BaseModel):
     skills: List[Skill] = Field(default_factory=list)
     experience: List[Experience] = Field(default_factory=list)
     education: List[Education] = Field(default_factory=list)
+    projects: List[ProjectEntry] = Field(default_factory=list)
     provenance: List[ProvenanceEntry] = Field(default_factory=list)
     overall_confidence: float = 1.0
     total_source_points: int = 1

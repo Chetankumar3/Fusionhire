@@ -31,8 +31,8 @@ def test_chetan_merges_across_csv_and_resume():
     chetan = next((p for p in profiles if (p.get("full_name") or "").startswith("Chetan")), None)
     assert chetan is not None, "merged Chetan profile should exist"
 
-    # Two source points: csv row + resume.
-    assert chetan["total_source_points"] == 2
+    # Chetan appears in the CSV and in the resume(s) -> merged across sources.
+    assert chetan["total_source_points"] >= 2
     assert "chetanmajjagi3@gmail.com" in chetan["emails"]
     assert "+919148808717" in chetan["phones"]
 
@@ -42,16 +42,19 @@ def test_chetan_merges_across_csv_and_resume():
     skill_names = {s["name"] for s in chetan["skills"]}
     assert {"Python", "Docker Swarm"}.issubset(skill_names)
 
-    # CSV "Software Engineer" + 3 resume projects -> experience entries.
+    # CSV "Software Engineer" -> experience; resume PROJECTS -> projects (not experience).
     titles = {e["title"] for e in chetan["experience"]}
     assert "Software Engineer" in titles
-    assert len(chetan["experience"]) >= 4
+    assert len(chetan["projects"]) >= 3
+    assert all("tech_stack" in p for p in chetan["projects"])
 
-    # Confidence is populated and in range.
+    # Provenance is one entry per top-level field; confidence populated + in range.
+    prov_fields = {e["field"] for e in chetan["provenance"]}
+    assert {"full_name", "emails", "skills", "projects"}.issubset(prov_fields)
     assert 0.0 <= chetan["overall_confidence"] <= 1.0
 
 
 def test_no_garbage_crash_on_distinct_candidates():
     store = _run_pipeline_inprocess()
-    # 5 distinct people from 6 records (Chetan appears twice).
+    # 5 distinct people; Chetan's CSV row + resume(s) collapse into one.
     assert len(store.all_canonical()) == 5

@@ -20,15 +20,30 @@ Fusionhire is a Multi-Source Candidate Data Transformer. It ingests candidate in
 
 ## 2. How to Run
 
-The pipeline is designed to be completely frictionless with zero external database dependencies.
+The pipeline is designed to be frictionless with zero external database setup (Mongita is an embedded, file-based Mongo).
 
-1. Install dependencies:
+1. Install Python dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-2. Execute the pipeline:
+
+2. (Optional) Install the resume **Part A** (OpenResume / Node) dependencies. Part A uses pdf.js — the PDF engine OpenResume is built on — to read resume PDFs positionally and regenerate the intermediate JSON. If you skip this step, the committed intermediate under `backend/parsers/resume_parser/raw_json/` is reused automatically, so the resume source still flows.
+   ```bash
+   cd backend/parsers/resume_parser
+   npm install
+   cd ../../../..
+   ```
+
+3. Execute the pipeline:
    ```bash
    python .\backend\run_pipeline.py
+   ```
+   This writes the default-schema output to `backend/shared_memory/output_default.json` and the custom-config output to `backend/shared_memory/output_custom.json`.
+
+4. **Customize the output (the configurable "twist").** To reshape the output, edit a config JSON under `backend/projector/configs/` (e.g. `custom_contact_card.json`): pick a subset of `fields`, rename/remap any field with its `from` path (e.g. `"from": "emails[0]"`, `"from": "skills[].name"`, `"from": "projects[].title"`), toggle `include_confidence` / `include_provenance`, and set `on_missing` to `null` / `omit` / `error`. Then run the projector against that config and point it at the output **file location** of your choice:
+   ```bash
+   cd backend
+   python -m projector.projector --config projector/configs/custom_contact_card.json --output ../my_output.json
    ```
 
 ## 3. Architecture
@@ -55,6 +70,6 @@ The pipeline is designed to be completely frictionless with zero external databa
 ## 6. Noteworthy Technical Points
 
 - **OpenResume over pyresparser:** OpenResume's structural, rule-based parsing reliably links nested chronological data (e.g., role → company → dates) and guarantees deterministic output, unlike pyresparser's flat entity lists.
-- **Archival over Hard Deletion:** Merged records are moved to `archive_profiles` rather than deleted, preserving a full audit trail for `provenance`.
-- **Procurement Timestamps:** A `procured_at` timestamp set at ingestion determines the winning value for single-value field conflicts.
-- **Deterministic ID Generation:** `candidate_id`s are generated deterministically from primary match keys, avoiding Mongita/MongoDB's probabilistic `_id` generation.
+- **Raw Audit Trail (DSU model):** Every parsed record is kept permanently in a `normalized_profiles` collection with a `profile_of` foreign key to its merged `canonical_profiles` document. Each canonical profile is rebuilt from scratch from those raw records on every merge (disjoint-set-union style), so a single record can even bridge two previously-separate identities. There is no separate archive collection and no lossy in-place merging.
+- **Procurement Timestamps:** A `procured_at` timestamp (the input file's mtime) determines the winning value for single-value field conflicts, and the winning record's own `source` / `method` are recorded in provenance.
+- **Deterministic output, Mongita-assigned IDs:** For a given set of input files the merged output is reproducible byte-for-byte, with one documented exception — `candidate_id` is Mongita's auto-generated `_id`, so it can differ across runs from an empty DB.

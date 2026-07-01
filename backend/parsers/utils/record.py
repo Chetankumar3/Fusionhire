@@ -1,8 +1,16 @@
 """Shared builder for the parser output contract.
 
 Both parsers (CSV and resume Part B) call `build_parsed_record` so every record
-written to `shared_memory/parsed_jsons/` has the exact same shape. Centralizing this is the whole point of the contract:
-the merge engine can trust the structure regardless of which parser produced it.
+written to `shared_memory/parsed_jsons/` has the exact same shape. Centralizing
+this is the point of the contract: the merge engine can trust the structure
+regardless of which parser produced it.
+
+Each record carries three flat provenance fields — `source`, `method`,
+`procured_at` — used directly by the merge engine (which regenerates the
+canonical `provenance` array at merge time). Parsers do NOT emit `provenance` or
+`total_source_points`: provenance is rebuilt per canonical field during merge,
+and total_source_points is just `len(records)` for the current merge, computed
+inline. See merge.py (CHANGE 4).
 """
 
 from __future__ import annotations
@@ -42,28 +50,21 @@ def build_parsed_record(
     skills: Optional[List[dict]] = None,
     experience: Optional[List[dict]] = None,
     education: Optional[List[dict]] = None,
+    projects: Optional[List[dict]] = None,
 ) -> dict:
-    emails = emails or []
-    phones = phones or []
-    location = {**_empty_location(), **(location or {})}
-    links = {**_empty_links(), **(links or {})}
-    skills = skills or []
-    experience = experience or []
-    education = education or []
-
     return {
         "source": source,
         "method": method,
         "procured_at": procured_at,
-        "total_source_points": 1,
         "full_name": full_name,
-        "emails": emails,
-        "phones": phones,
-        "location": location,
-        "links": links,
+        "emails": emails or [],
+        "phones": phones or [],
+        "location": {**_empty_location(), **(location or {})},
+        "links": {**_empty_links(), **(links or {})},
         "headline": headline,
         "years_experience": years_experience,
-        "skills": skills,
-        "experience": experience,
-        "education": education
+        "skills": skills or [],
+        "experience": experience or [],
+        "education": education or [],
+        "projects": projects or [],
     }

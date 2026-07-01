@@ -126,51 +126,54 @@ def _strip_keys(obj, keys: set):
 # --------------------------------------------------------------------------- #
 
 
-def project_profile(data, on_missing_strategy):
-    if isinstance(data, dict):
-        processed_dict = {}
-        for key, value in data.items():
-            processed_val = project_profile(value, on_missing_strategy)
-            
-            # Check if this specific field value is effectively absent
-            is_absent = (processed_val is None or processed_val == "" or 
-                         processed_val == [] or processed_val == {})
-            
-            if not is_absent:
-                processed_dict[key] = processed_val
-            elif on_missing_strategy == "error":
-                raise ValueError(f"Missing value encountered at key: '{key}'")
-            elif on_missing_strategy == "null":
-                processed_dict[key] = None
-            # If "omit", we just don't add the key to processed_dict
-        
-        # Determine if the parent object itself is now empty
-        if not processed_dict:
-            return None if on_missing_strategy == "null" else {}
-        if all(v is None for v in processed_dict.values()):
-            return None if on_missing_strategy == "null" else {}
-            
-        return processed_dict
+def project_profile(profile: dict, config: dict) -> dict:
+    """Project one canonical profile into the configured output shape.
 
-    elif isinstance(data, list):
-        processed_list = []
-        for item in data:
-            val = project_profile(item, on_missing_strategy)
-            # Only append if it's not effectively absent or we are using "null"
-            if val is not None or on_missing_strategy == "null":
-                processed_list.append(val)
-        
-        if not processed_list:
-            return None if on_missing_strategy == "null" else []
-        return processed_list
+    Field selection + renaming via `path` (output key) and `from` (source path);
+    normalize-value validation; include_confidence / include_provenance toggles;
+    and the `on_missing` (null | omit | error) contract.
+    """
+    on_missing = config.get("on_missing", "null")
+    out: dict = {}
 
+    for field in config.get("fields", []):
+        out_key = field["path"]
+        from_path = field.get("from", out_key)
+
+        # Normalization is a config-validity check (data is already normalized).
+        normalize = field.get("normalize")
+        if normalize is not None and normalize not in SUPPORTED_NORMALIZE:
+            raise ProjectorError(f"{normalize} is not supported yet")  # always an error
+
+        value = resolve_path(profile, from_path)
+        value = _strip_underscores(value) if value is not _SENTINEL else value
+
+        if value is _SENTINEL or value is None:
+            if on_missing == "omit":
+                continue
+            if on_missing == "error":
+                raise MissingFieldError(
+                    f"missing required value for field '{out_key}' (from '{from_path}')"
+                )
+            out[out_key] = None  # "null"
+        else:
+            out[out_key] = value
+
+    # Confidence toggle.
+    if config.get("include_confidence", False):
+        out["overall_confidence"] = profile.get("overall_confidence")
     else:
-        # Base case: if data is None/empty at the literal level
-        if data in [None, ""]:
-            if on_missing_strategy == "error":
-                raise ValueError("Missing literal value.")
-            return None if on_missing_strategy == "null" else None
-        return data
+        out.pop("overall_confidence", None)
+        out = _strip_keys(out, {"confidence"})
+
+    # Provenance toggle.
+    if config.get("include_provenance", False):
+        out["provenance"] = _strip_underscores(profile.get("provenance", []))
+    else:
+        out.pop("provenance", None)
+        out = _strip_keys(out, {"sources"})
+
+    return out
 
 
 def validate_projection(projected: dict, config: dict) -> dict:
@@ -194,14 +197,9 @@ def project_all(config: dict, candidate_id: Optional[str] = None) -> List[dict]:
         profiles = [p for p in profiles if str(p.get("candidate_id")) == str(candidate_id)]
 
     results = []
-    # Extract the strategy string here, defaulting to "omit" if not provided
-    on_missing_strategy = config.get("on_missing", "omit") 
-    
     for profile in profiles:
-        # Pass the string, not the dictionary
-        projected = project_profile(profile, on_missing_strategy) 
+        projected = project_profile(profile, config)
         results.append(validate_projection(projected, config))
-        
     return results
 
 

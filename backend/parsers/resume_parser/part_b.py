@@ -4,11 +4,10 @@ Consumes the intermediate raw JSON produced by Part A (`raw_json/*.json`), appli
 the shared `parsers/utils` normalizers, and writes the final parsed record to
 `shared_memory/parsed_jsons/` per the parser output contract.
 
-Field extraction here is heuristic (resumes are free-form prose). Notable mapping
-decision: PROJECTS are surfaced as `experience` entries (company=null,
-title=project name) so the pipeline exercises real date normalization
-("May 2026"->"2026-05", "Present"->null) and the experience-merge path. This is
-documented in the README.
+Field extraction here is heuristic (resumes are free-form prose). The resume's
+PROJECTS section maps to the canonical `projects` field (title / description /
+tech_stack), NOT `experience` — `experience` is reserved for actual work history
+(this student resume has none, so it emits `experience: []`).
 """
 
 from __future__ import annotations
@@ -29,7 +28,6 @@ while _d != os.path.dirname(_d):
 import paths
 from parsers.utils.normalizers import (
     _country_alpha2,
-    normalize_date,
     normalize_emails,
     normalize_name,
     normalize_phones,
@@ -176,37 +174,42 @@ def _parse_education(sections):
 
 
 # --------------------------------------------------------------------------- #
-# Projects -> experience                                                       #
+# Projects (title / description / tech_stack)                                  #
 # --------------------------------------------------------------------------- #
+
+_TECH_STACK_RE = re.compile(r"(?i)^tech\s*stack\s*:(.*)$")
+
+
+def _finish_project(cur):
+    desc = " ".join(p for p in cur["desc_parts"] if p) or None
+    return {"title": cur["title"], "description": desc, "tech_stack": cur["tech_stack"]}
 
 
 def _parse_projects(sections):
-    exps = []
+    """Extract the PROJECTS section into {title, description, tech_stack} entries.
+
+    A project header is a line carrying a date range; following bullet lines are
+    its description, and a "Tech Stack: ..." line becomes tech_stack.
+    """
+    projects = []
     cur = None
     for line in sections.get("PROJECTS", []):
-        m = _DATE_RANGE_RE.search(line)
-        if m:
+        if _DATE_RANGE_RE.search(line):
             if cur:
-                exps.append(cur)
-            title = line[: m.start()]
+                projects.append(_finish_project(cur))
+            title = line[: _DATE_RANGE_RE.search(line).start()]
             title = re.split(r"§|\bGit repo\b|\bGithub\b|\bGit\b", title)[0]
-            title = title.strip(" :–-•")
-            cur = {
-                "company": None,
-                "title": title or None,
-                "start": normalize_date(m.group(1)),
-                "end": normalize_date(m.group(2)),
-                "_summary_parts": [],
-            }
+            cur = {"title": title.strip(" :–-•") or None, "desc_parts": [], "tech_stack": []}
         elif cur is not None:
-            cur["_summary_parts"].append(line.lstrip("•").strip())
+            s = line.lstrip("•").strip()
+            tech = _TECH_STACK_RE.match(s)
+            if tech:
+                cur["tech_stack"] = [t.strip(" .") for t in tech.group(1).split(",") if t.strip(" .")]
+            else:
+                cur["desc_parts"].append(s)
     if cur:
-        exps.append(cur)
-
-    for e in exps:
-        sp = [p for p in e.pop("_summary_parts") if p]
-        e["summary"] = " ".join(sp) if sp else None
-    return exps
+        projects.append(_finish_project(cur))
+    return projects
 
 
 # --------------------------------------------------------------------------- #
@@ -226,7 +229,7 @@ def build_record_from_raw(raw_json: dict, source: str, procured_at: str) -> dict
     link_obj = _classify_links(links)
     headline = _extract_headline(sections)
     skills = canonicalize_skills(_extract_skill_tokens(sections), source)
-    experience = _parse_projects(sections)
+    projects = _parse_projects(sections)
     education, location = _parse_education(sections)
 
     return build_parsed_record(
@@ -240,8 +243,9 @@ def build_record_from_raw(raw_json: dict, source: str, procured_at: str) -> dict
         links=link_obj,
         headline=headline,
         skills=skills,
-        experience=experience,
+        experience=[],  # resume has no formal work history; projects go to `projects`
         education=education,
+        projects=projects,
     )
 
 

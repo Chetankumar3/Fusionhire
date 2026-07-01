@@ -10,7 +10,8 @@
     { "path": "years_experience", "type": "number" },
     { "path": "skills", "type": "object[]" },
     { "path": "experience", "type": "object[]" },
-    { "path": "education", "type": "object[]" }
+    { "path": "education", "type": "object[]" },
+    { "path": "projects", "type": "object[]" }
   ],
   "include_confidence": false,
   "include_provenance": false,
